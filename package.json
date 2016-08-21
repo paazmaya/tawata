@@ -1,0 +1,39 @@
+{
+  "name": "tawata",
+  "version": "0.1.0",
+  "description": "Check whitelist/blacklist of included files for each dependency and create issues when needed",
+  "main": "index.js",
+  "bin": "bin/tawata.js",
+  "scripts": {
+    "test": "nyc tape test/*_test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/paazmaya/tawata.git"
+  },
+  "engines": {
+    "node": ">=5.10.0"
+  },
+  "files": [
+    "bin",
+    "index.js",
+    "package.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "npm",
+    "issue",
+    "files",
+    "npmignore"
+  ],
+  "author": "Juga Paazmaya <paazmaya@yahoo.com> (http://www.paazmaya.fi)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paazmaya/tawata/issues"
+  },
+  "homepage": "https://github.com/paazmaya/tawata#readme",
+  "dependencies": {
+    "got": "^6.3.0"
+  }
+}
