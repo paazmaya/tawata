@@ -38,7 +38,8 @@ const createIssue = (repo, options) => {
     json: true,
     headers: {
       'accept': 'application/vnd.github.v3+json',
-      'authorization': `token ${options.token}`
+      'authorization': `token ${options.token}`,
+      'user-agent': 'https://github.com/paazmaya/tawata'
     },
     method: 'POST',
     body: data
@@ -65,7 +66,8 @@ const getRepoIgnore = (repo, options) => {
     json: true,
     headers: {
       'accept': 'application/vnd.github.v3+json',
-      'authorization': `token ${options.token}`
+      'authorization': `token ${options.token}`,
+      'user-agent': 'https://github.com/paazmaya/tawata'
     },
     method: 'GET'
   }).then(response => {
@@ -80,7 +82,7 @@ const getRepoIgnore = (repo, options) => {
   });
 };
 
-const parseBody = (body) => {
+const parseContent = (body) => {
   if (body.content && body.encoding) {
     // https://nodejs.org/api/buffer.html#buffer_class_method_buffer_from_string_encoding
     // added in Node.js 5.10
@@ -104,7 +106,8 @@ const getRepoPackage = (repo, options) => {
     json: true,
     headers: {
       'accept': 'application/vnd.github.v3+json',
-      'authorization': `token ${options.token}`
+      'authorization': `token ${options.token}`,
+      'user-agent': 'https://github.com/paazmaya/tawata'
     },
     method: 'GET'
   }).then(response => {
@@ -112,7 +115,7 @@ const getRepoPackage = (repo, options) => {
     console.log(response.body);
     console.log(response.statusCode);
     return response.body;
-  }).then(parseBody).then(data => {
+  }).then(parseContent).then(data => {
     return parseJson(data);
   }).then(pkg => {
     return checkFilesProperty(pkg, options);
