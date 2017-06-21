@@ -34,6 +34,6 @@
   },
   "homepage": "https://github.com/paazmaya/tawata#readme",
   "dependencies": {
-    "got": "^6.6.3"
+    "got": "^7.0.0"
   }
 }
