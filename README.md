@@ -7,6 +7,8 @@ Node.js 5.10 is the minimum.
 
 ## Background for the name
 
+The name of the project is for honouring the legacy of a certain master from the Ryukyu archipelago who contributed to the martial arts that we today know as **karate** and **ryukyu kobujutsu**.
+
 ## Command line usage
 
 ## Contributing
