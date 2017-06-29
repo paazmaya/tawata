@@ -252,7 +252,12 @@ module.exports = function (options) {
   // options.token for GitHub API
   // Does current working directory contain node_modules?
   const dirpath = path.resolve('node_modules');
-  if (fs.existsSync(dirpath)) {
+
+  try {
+    fs.accessSync(dirpath);
     readModules(dirpath, options);
+  } catch(error) {
+    console.error(`Looks like "${dirpath}" cannot be accessed`);
+    console.error(error.message);
   }
 };
