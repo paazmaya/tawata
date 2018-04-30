@@ -3,7 +3,7 @@
 > Check whitelist/blacklist of included files for each dependency
 > and create issues when needed
 
-Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `6.9.5`, which is [the Long Term Support (LTS) version](https://github.com/nodejs/LTS#lts-schedule1).
+Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `8.11.1`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
 
 ## Background for the name
 
