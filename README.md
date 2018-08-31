@@ -3,6 +3,8 @@
 > Check whitelist/blacklist of included files for each dependency
 > and create issues when needed
 
+[![dependencies Status](https://david-dm.org/paazmaya/tawata/status.svg)](https://david-dm.org/paazmaya/tawata)
+
 Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `8.11.1`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
 
 ## Background for the name
