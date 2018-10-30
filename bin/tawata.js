@@ -14,8 +14,7 @@
  */
 'use strict';
 
-const fs = require('fs'),
-  path = require('path');
+const path = require('path');
 
 const tawata = require('../index');
 

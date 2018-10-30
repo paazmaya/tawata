@@ -5,15 +5,35 @@
 
 [![dependencies Status](https://david-dm.org/paazmaya/tawata/status.svg)](https://david-dm.org/paazmaya/tawata)
 
-Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `8.11.1`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
-
 ## Background for the name
 
 The name of the project is for honouring the legacy of a late master, Mr Tawata from the Ryukyu archipelago, who contributed to the martial arts that we today know as **karate** and **ryukyu kobujutsu**.
 
 There are forms carrying his name, such as "Tawata no Passai" and ["Tawata no Sai"](https://www.youtube.com/watch?v=YAQlFJIj32E), which both have distinctive use of a stance called "nekoashidachi" and sweeping motion related to the given stance.
 
+## Installation
+
+Install globally as a command line tool, while expecting to have [Node.js](https://nodejs.org/en/) already installed, and hence the `npm` tool available:
+
+```sh
+[sudo] npm install --global tawata
+```
+
+Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `8.11.1`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
+
 ## Command line usage
+
+The easiest way to get started with the command line interface, is to see the help output:
+
+```sh
+tawata --help
+```
+
+It provides the following output, which describes the possible usage options:
+
+```sh
+...
+```
 
 ## Contributing
 
