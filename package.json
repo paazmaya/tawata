@@ -5,17 +5,21 @@
   "main": "index.js",
   "bin": "bin/tawata.js",
   "scripts": {
-    "test": "nyc tape test/*_test.js"
+    "lint": "eslint index.js bin",
+    "coverage": "nyc --all --exclude tests report --reporter=text-lcov > coverage.lcov && codecov",
+    "test": "nyc --all --exclude tests tape tests/*_test.js tests/lib/*_test.js"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/paazmaya/tawata.git"
   },
   "engines": {
-    "node": ">=8.11.1"
+    "node": ">=8.11.1",
+    "npm": ">=5.0.0"
   },
   "files": [
     "bin",
+    "lib",
     "index.js",
     "package.json",
     "LICENSE",
@@ -34,6 +38,13 @@
   },
   "homepage": "https://github.com/paazmaya/tawata#readme",
   "dependencies": {
-    "got": "^9.2.0"
+    "got": "^9.3.0"
+  },
+  "devDependencies": {
+    "codecov": "^3.1.0",
+    "eslint": "^5.8.0",
+    "eslint-config-paazmaya": "^5.0.0",
+    "nyc": "^13.1.0",
+    "tape": "^4.9.1"
   }
 }
