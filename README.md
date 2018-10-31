@@ -4,6 +4,7 @@
 > and create issues when needed
 
 [![dependencies Status](https://david-dm.org/paazmaya/tawata/status.svg)](https://david-dm.org/paazmaya/tawata)
+[![CircleCI](https://circleci.com/gh/paazmaya/tawata.svg?style=svg)](https://circleci.com/gh/paazmaya/tawata)
 
 This tool will get a list of all the [Node.js](https://nodejs.org/en/) dependencies under the current working directory, followed by these steps:
 
