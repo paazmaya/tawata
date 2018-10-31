@@ -114,7 +114,7 @@ const tawata = (dirpath, options) => {
     console.log('createIssuesNeeded.length', createIssuesNeeded.length);
 
     return createIssuesNeeded.map((item) => {
-      //return createIssue(item, options.token);
+      return createIssue(item, options.token);
     });
   }).then(issueList => {
     return Promise.all(issueList);
