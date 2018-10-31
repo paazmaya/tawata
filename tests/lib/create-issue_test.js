@@ -2,16 +2,8 @@
 const tape = require('tape'),
   createIssue = require('../../lib/create-issue');
 
-tape('createIssue - files does not exist', (test) => {
-  /*
+tape('createIssue - Function takes two arguments', (test) => {
   test.plan(1);
 
-  const input = {
-    hoplaa: ''
-  };
-
-  const output = createIssue(input);
-
-  test.notOk(output);
-  */
+  test.equal(createIssue.length, 2);
 });

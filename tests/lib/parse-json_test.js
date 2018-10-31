@@ -2,12 +2,10 @@
 const tape = require('tape'),
   parseJson = require('../../lib/parse-json');
 
-tape('parseJson - files does not exist', (test) => {
+tape('parseJson - file does not exist', (test) => {
   test.plan(1);
 
-  const input = {
-    hoplaa: ''
-  };
+  const input = 'not-here';
 
   const output = parseJson(input);
 

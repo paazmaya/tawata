@@ -1,9 +1,8 @@
 
 const tape = require('tape'),
   getRepoIgnore = require('../../lib/get-repo-ignore');
-
+/*
 tape('getRepoIgnore - files does not exist', (test) => {
-  /*
   test.plan(1);
 
   const input = {
@@ -13,5 +12,5 @@ tape('getRepoIgnore - files does not exist', (test) => {
   const output = getRepoIgnore(input);
 
   test.notOk(output);
-  */
 });
+*/

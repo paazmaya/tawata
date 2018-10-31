@@ -16,6 +16,9 @@ const fs = require('fs'),
   path = require('path');
 
 const readModules = require('./lib/read-modules'),
+  readReponame = require('./lib/read-repo-name'),
+  getRepoIgnore = require('./lib/get-repo-ignore'),
+  createIssue = require('./lib/create-issue'),
   checkFilesProperty = require('./lib/check-files-property');
 
 const DOT_INIT = /^\./u;
@@ -61,9 +64,6 @@ const findModules = (dirpath) => {
  * @returns {bool|Promise} False when something goes wrong or a Promise
  */
 const tawata = (dirpath, options) => {
-  console.log(options);
-  // options.token for GitHub API
-
   try {
     fs.accessSync(dirpath);
   }
@@ -77,13 +77,49 @@ const tawata = (dirpath, options) => {
   const list = findModules(dirpath);
   console.log(`Found ${list.length} directories under node_modules`);
 
+  // Which of those have the files property?
+  // Which of those that did not have the files property, have .npmignore file?
+  // For the remaining, create an issue.
+
+  const createIssuesNeeded = [];
+
   return readModules(list, options).then((data) => {
+
     // Do something with the latest package.json from GitHub repository
-    data.forEach((pkg) => {
-      // Is there files prop in the online copy?
-      const hasFiles = checkFilesProperty(pkg, options);
-      console.log(pkg.name, 'has files', hasFiles);
+    const checkIgnorePromises = data
+      .filter((pkg) => {
+        return !checkFilesProperty(pkg);
+      })
+      .map((pkg) => {
+        return readReponame(pkg);
+      })
+      .filter((item) => item !== false)
+      .map((item) => {
+        return getRepoIgnore(item, options.token)
+          .catch(error => {
+            console.error('Error appears with', item, error.response.statusCode);
+            createIssuesNeeded.push(item);
+          });
+      });
+
+    console.log('Should check how many for .npmignore file:', checkIgnorePromises.length);
+
+    return Promise.all(checkIgnorePromises)
+      .then((ignoreList) => {
+        console.log('All ignores done?');
+
+        return ignoreList;
+      });
+  }).then(() => {
+    console.log('createIssuesNeeded.length', createIssuesNeeded.length);
+
+    return createIssuesNeeded.map((item) => {
+      //return createIssue(item, options.token);
     });
+  }).then(issueList => {
+    return Promise.all(issueList);
+  }).then(() => {
+    console.log('Issues created!');
   });
 };
 

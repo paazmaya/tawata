@@ -5,6 +5,15 @@
 
 [![dependencies Status](https://david-dm.org/paazmaya/tawata/status.svg)](https://david-dm.org/paazmaya/tawata)
 
+This tool will get a list of all the [Node.js](https://nodejs.org/en/) dependencies under the current working directory, followed by these steps:
+
+1. Which of those dependencies have [the `files` property defined in `package.json` file](https://docs.npmjs.com/files/package.json#files), in their GitHub repository?
+1. Which of those that did not have the `files` property, have [the `.npmignore` file](https://docs.npmjs.com/misc/developers#keeping-files-out-of-your-package) existing in their GitHub repository?
+1. For the remaining, create an issue to their GitHub repository for adding either the `files` property or `.npmignore`, so that the resulting package would become possibly smaller.
+
+In order to see if the resulting package becomes any smaller, test it before by creating the package with [the command `npm pack`](https://docs.npmjs.com/cli/pack), then rename the resulting file so it would not be overwritten.
+Then add the limitations and create the package again and see the file size difference.
+
 ## Background for the name
 
 The name of the project is for honouring the legacy of a late master, Mr Tawata from the Ryukyu archipelago, who contributed to the martial arts that we today know as **karate** and **ryukyu kobujutsu**.
@@ -20,6 +29,8 @@ Install globally as a command line tool, while expecting to have [Node.js](https
 ```
 
 Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `8.11.1`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
+
+GitHub API token is needed, and it should be made available via an environment variable called `GITHUB_TOKEN`.
 
 ## Command line usage
 

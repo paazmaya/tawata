@@ -1,4 +1,6 @@
 
+const path = require('path');
+
 const tape = require('tape'),
   readPackage = require('../../lib/read-package');
 
@@ -15,7 +17,7 @@ tape('readPackage - file does not exist', (test) => {
 tape('readPackage - file does exist', (test) => {
   test.plan(1);
 
-  const input = '../../';
+  const input = path.join(__dirname, '..', '..');
 
   const output = readPackage(input);
 

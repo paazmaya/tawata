@@ -2,6 +2,7 @@
 const tape = require('tape'),
   getRepoPackage = require('../../lib/get-repo-package');
 
+/*
 tape('getRepoPackage - files does not exist', (test) => {
   test.plan(1);
 
@@ -13,3 +14,4 @@ tape('getRepoPackage - files does not exist', (test) => {
 
   test.notOk(output);
 });
+*/
