@@ -1,18 +1,15 @@
 
 const tape = require('tape'),
   readModules = require('../../lib/read-modules');
-/*
-tape('readModules - files does not exist', (test) => {
+
+tape('readModules - empty list', (test) => {
 
   test.plan(1);
 
-  const input = {
-    hoplaa: ''
-  };
+  const input = [];
 
-  const output = readModules(input);
+  const output = readModules(input, '');
 
-  test.notOk(output);
+  test.deepEqual(output, {});
 
 });
-*/

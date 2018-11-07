@@ -2,10 +2,30 @@
 const tape = require('tape'),
   parseJson = require('../../lib/parse-json');
 
-tape('parseJson - file does not exist', (test) => {
+tape('parseJson - not json input', (test) => {
   test.plan(1);
 
   const input = 'not-here';
+
+  const output = parseJson(input);
+
+  test.notOk(output);
+});
+
+tape('parseJson - json input', (test) => {
+  test.plan(1);
+
+  const input = '{"hello": "there"}';
+
+  const output = parseJson(input);
+
+  test.equal(output.hello, 'there');
+});
+
+tape('parseJson - null', (test) => {
+  test.plan(1);
+
+  const input = null;
 
   const output = parseJson(input);
 

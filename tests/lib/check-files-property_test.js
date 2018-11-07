@@ -26,6 +26,16 @@ tape('checkFilesProperty - files is not an array', (test) => {
   test.notOk(output);
 });
 
+tape('checkFilesProperty - null', (test) => {
+  test.plan(1);
+
+  const input = null;
+
+  const output = checkFilesProperty(input);
+
+  test.notOk(output);
+});
+
 tape('checkFilesProperty - files is an array with zero', (test) => {
   test.plan(1);
 

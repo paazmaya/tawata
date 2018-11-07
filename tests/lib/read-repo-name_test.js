@@ -30,3 +30,14 @@ tape('getReponame - https url', (test) => {
 
   test.equal(output, 'acornjs/acorn');
 });
+
+tape('getReponame - null', (test) => {
+
+  test.plan(1);
+
+  const input = null;
+
+  const output = readReponame(input);
+
+  test.ok(output === false);
+});
