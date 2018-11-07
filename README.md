@@ -45,7 +45,15 @@ tawata --help
 It provides the following output, which describes the possible usage options:
 
 ```sh
-...
+tawata - Check whitelist/blacklist of included files for each dependency and create issues when needed
+Usage: tawata [options] <target path, defaults to './node_modules'>
+
+  -h, --help          Help and usage instructions
+  -V, --version       Version number
+  -v, --verbose       Verbose output, will give more information printed out
+  -t, --token String  GitHub API personal authentication token
+
+Version 0.1.0
 ```
 
 ## Contributing
