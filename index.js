@@ -15,6 +15,8 @@
 const fs = require('fs'),
   path = require('path');
 
+const readlineSync = require('readline-sync');
+
 const readModules = require('./lib/read-modules'),
   readReponame = require('./lib/read-repo-name'),
   getRepoIgnore = require('./lib/get-repo-ignore'),
@@ -53,6 +55,18 @@ const findModules = (dirpath) => {
         return false;
       }
     });
+};
+
+/**
+ * Confirm creating an issue, based on the user input.
+ *
+ * @param {string} repo person/name
+ * @return {boolean} True when the issue should be created
+ */
+const confirmIssue = (item) => {
+  const answer = readlineSync.question(`Create issue in GitHub for "${item}" y/N:`));
+
+  return answer.match(/^y(es)?$/iu);
 };
 
 /**
@@ -114,9 +128,13 @@ const tawata = (dirpath, options) => {
     console.log('createIssuesNeeded.length', createIssuesNeeded.length);
 
     return createIssuesNeeded.map((item) => {
-      return createIssue(item, options.token);
+      if (confirmIssue(item)) {
+        return createIssue(item, options.token);
+      }
+
+      return false;
     });
-  }).then(issueList => {
+  }).then((issueList) => {
     return Promise.all(issueList);
   }).then(() => {
     console.log('Issues created!');

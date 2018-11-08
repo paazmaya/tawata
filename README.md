@@ -22,6 +22,13 @@ The name of the project is for honouring the legacy of a late master, Mr Tawata 
 
 There are forms carrying his name, such as "Tawata no Passai" and ["Tawata no Sai"](https://www.youtube.com/watch?v=YAQlFJIj32E), which both have distinctive use of a stance called "nekoashidachi" and sweeping motion related to the given stance.
 
+## Roadmap
+
+The first version tested with real life usage turned out to be considered as spam #9,
+and unnecessary noise. The first release version, namely `v0.1.0` asked the user for each individual issue to be created.
+
+Further than just checking the existence of `files` property and `.npmignore` file, this tool should be able to check for things such as `license` property and `LICENSE*` file.
+
 ## Installation
 
 Install globally as a command line tool, while expecting to have [Node.js](https://nodejs.org/en/) already installed, and hence the `npm` tool available:
@@ -32,7 +39,8 @@ Install globally as a command line tool, while expecting to have [Node.js](https
 
 Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `8.11.1`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
 
-GitHub API token is needed, and it should be made available via an environment variable called `GITHUB_TOKEN`.
+GitHub API token is needed, and it should be made available either via the `--token` command line option,
+or via an environment variable called `GITHUB_TOKEN`.
 
 ## Command line usage
 
@@ -71,6 +79,9 @@ can be executed with `npm run coverage` after running `npm test`.
 Please make sure it is over 90% at all times.
 
 ## Version history
+
+* `v0.1.0` (2018-11-)
+  - Checks for existence of `files` property and `.npmignore` file
 
 ## License
 
