@@ -60,11 +60,11 @@ const findModules = (dirpath) => {
 /**
  * Confirm creating an issue, based on the user input.
  *
- * @param {string} repo person/name
+ * @param {string} item person/name
  * @return {boolean} True when the issue should be created
  */
 const confirmIssue = (item) => {
-  const answer = readlineSync.question(`Create issue in GitHub for "${item}" y/N:`));
+  const answer = readlineSync.question(`Create issue in GitHub for "${item}" y/N:`);
 
   return answer.match(/^y(es)?$/iu);
 };
