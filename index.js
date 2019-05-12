@@ -110,7 +110,7 @@ const tawata = (dirpath, options) => {
       .filter((item) => item !== false)
       .map((item) => {
         return getRepoIgnore(item, options.token)
-          .catch(error => {
+          .catch((error) => {
             console.error('Error appears with', item, error.response.statusCode);
             createIssuesNeeded.push(item);
           });

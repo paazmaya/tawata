@@ -20,9 +20,9 @@ tape('getReponame - https url', (test) => {
   test.plan(1);
 
   const input = {
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/acornjs/acorn.git"
+    repository: {
+      type: 'git',
+      url: 'git+https://github.com/acornjs/acorn.git'
     }
   };
 
