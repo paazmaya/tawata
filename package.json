@@ -39,15 +39,15 @@
   },
   "homepage": "https://github.com/paazmaya/tawata#readme",
   "dependencies": {
-    "got": "^9.6.0",
-    "optionator": "^0.8.2",
-    "readline-sync": "^1.4.9"
+    "got": "^10.2.2",
+    "optionator": "^0.8.3",
+    "readline-sync": "^1.4.10"
   },
   "devDependencies": {
-    "codecov": "3.4.0",
-    "eslint": "5.16.0",
-    "eslint-config-paazmaya": "5.3.0",
-    "nyc": "14.1.1",
-    "tape": "4.10.1"
+    "codecov": "3.6.1",
+    "eslint": "6.8.0",
+    "eslint-config-paazmaya": "6.1.0",
+    "nyc": "15.0.0",
+    "tape": "4.13.0"
   }
 }
