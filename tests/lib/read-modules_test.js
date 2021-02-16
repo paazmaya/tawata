@@ -10,6 +10,6 @@ tape('readModules - empty list', (test) => {
 
   const output = readModules(input, '');
 
-  test.deepEqual(output, {});
+  test.equal(Object.keys(output).length, 0);
 
 });

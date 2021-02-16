@@ -14,8 +14,8 @@
     "url": "git+ssh://git@github.com/paazmaya/tawata.git"
   },
   "engines": {
-    "node": ">=10.13.0",
-    "npm": ">=5.0.0"
+    "node": ">=14.15.0",
+    "npm": ">=6.0.0"
   },
   "files": [
     "bin",
@@ -39,15 +39,15 @@
   },
   "homepage": "https://github.com/paazmaya/tawata#readme",
   "dependencies": {
-    "got": "^10.2.2",
-    "optionator": "^0.8.3",
+    "got": "^11.8.1",
+    "optionator": "^0.9.1",
     "readline-sync": "^1.4.10"
   },
   "devDependencies": {
-    "codecov": "3.7.1",
-    "eslint": "6.8.0",
-    "eslint-config-paazmaya": "6.1.0",
-    "nyc": "15.0.0",
-    "tape": "4.13.0"
+    "codecov": "3.8.1",
+    "eslint": "7.20.0",
+    "eslint-config-paazmaya": "7.2.0",
+    "nyc": "15.1.0",
+    "tape": "5.1.1"
   }
 }

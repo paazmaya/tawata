@@ -37,7 +37,7 @@ Install globally as a command line tool, while expecting to have [Node.js](https
 [sudo] npm install --global tawata
 ```
 
-Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `10.13.0`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
+Please note that the minimum supported version of [Node.js](https://nodejs.org/en/) is `14.15.0`, which is [the active Long Term Support (LTS) version](https://github.com/nodejs/Release#release-schedule).
 
 GitHub API token is needed, and it should be made available either via the `--token` command line option,
 or via an environment variable called `GITHUB_TOKEN`.
