@@ -80,9 +80,7 @@ Please make sure it is over 90% at all times.
 
 ## Version history
 
-* `v0.1.0` (2018-11-)
-  - Use [`npm-shrinkwrap.json`](https://docs.npmjs.com/files/shrinkwrap.json) for locking the working set of 3rd party dependencies
-  - Initial functionality which checks for existence of `files` property and `.npmignore` file
+[Changes happening across different versions and upcoming changes are tracked in the `CHANGELOG.md` file.](CHANGELOG.md)
 
 ## License
 
