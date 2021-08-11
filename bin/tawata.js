@@ -1,4 +1,4 @@
-#!/bin/env node
+#!/usr/bin/env node
 
 /**
  * tawata (多和田)
