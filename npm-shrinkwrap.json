@@ -9,9 +9,9 @@
       "version": "0.1.0",
       "license": "MIT",
       "dependencies": {
-        "got": "^11.8.3",
-        "optionator": "^0.9.1",
-        "readline-sync": "^1.4.10"
+        "got": "11.8.3",
+        "optionator": "0.9.1",
+        "readline-sync": "1.4.10"
       },
       "bin": {
         "tawata": "bin/tawata.js"
