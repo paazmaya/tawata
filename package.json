@@ -39,7 +39,7 @@
   },
   "homepage": "https://github.com/paazmaya/tawata#readme",
   "dependencies": {
-    "got": "11.8.3",
+    "got": "11.8.5",
     "optionator": "0.9.1",
     "readline-sync": "1.4.10"
   },
