@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "description": "Check whitelist/blacklist of included files for each dependency and create issues when needed",
   "main": "index.js",
+  "type": "module",
   "bin": "bin/tawata.js",
   "scripts": {
-    "lint": "eslint index.js bin lib",
+    "lint": "eslint *.js bin lib",
     "coverage": "nyc --all --exclude tests report --reporter=text-lcov > coverage.lcov && codecov",
     "test": "nyc --all --exclude tests tape tests/*_test.js tests/lib/*_test.js"
   },
@@ -45,8 +46,8 @@
   },
   "devDependencies": {
     "codecov": "3.8.3",
-    "eslint": "7.32.0",
-    "eslint-config-paazmaya": "7.2.0",
+    "eslint": "8.28.0",
+    "eslint-config-paazmaya": "9.0.0",
     "eslint-plugin-node": "11.1.0",
     "nyc": "15.1.0",
     "tape": "5.5.3"
