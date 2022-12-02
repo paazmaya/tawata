@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  checkFilesProperty = require('../../lib/check-files-property');
+import tape from 'tape';
+import checkFilesProperty from '../../lib/check-files-property.js';
 
 tape('checkFilesProperty - files does not exist', (test) => {
   test.plan(1);

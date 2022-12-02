@@ -1,8 +1,8 @@
 
-const path = require('path');
+import path from 'path';
 
-const tape = require('tape'),
-  readPackage = require('../../lib/read-package');
+import tape from 'tape';
+import readPackage from '../../lib/read-package.js';
 
 tape('readPackage - file does not exist', (test) => {
   test.plan(1);

@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  getRepoPackage = require('../../lib/get-repo-package');
+import tape from 'tape';
+import getRepoPackage from '../../lib/get-repo-package.js';
 
 /*
 tape('getRepoPackage - files does not exist', (test) => {

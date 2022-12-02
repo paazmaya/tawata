@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  readReponame = require('../../lib/read-repo-name');
+import tape from 'tape';
+import readReponame from '../../lib/read-repo-name.js';
 
 tape('getReponame - git url', (test) => {
 

@@ -14,13 +14,13 @@
  */
 
 
-const path = require('path');
+import path from 'path';
 
-const optionator = require('optionator');
+import optionator from 'optionator';
 
-const tawata = require('../index');
+import tawata from '../index.js';
 
-const PKG = require('../package.json');
+import PKG from '../package.json' assert { type: 'json' };
 
 const optsParser = optionator({
   prepend: `Usage: ${PKG.name} [options] <target path, defaults to './node_modules'>`,

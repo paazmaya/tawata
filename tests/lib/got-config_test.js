@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  gotConfig = require('../../lib/got-config');
+import tape from 'tape';
+import gotConfig from '../../lib/got-config.js';
 
 tape('gotConfig - token gets used', (test) => {
   test.plan(1);

@@ -11,16 +11,16 @@
  * Licensed under the MIT license
  */
 
-const fs = require('fs'),
-  path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-const readlineSync = require('readline-sync');
+import readlineSync from 'readline-sync';
 
-const readModules = require('./lib/read-modules'),
-  readReponame = require('./lib/read-repo-name'),
-  getRepoIgnore = require('./lib/get-repo-ignore'),
-  createIssue = require('./lib/create-issue'),
-  checkFilesProperty = require('./lib/check-files-property');
+import readModules from './lib/read-modules.js';
+import readReponame from './lib/read-repo-name.js';
+import getRepoIgnore from './lib/get-repo-ignore.js';
+import createIssue from './lib/create-issue.js';
+import checkFilesProperty from './lib/check-files-property.js';
 
 const DOT_INIT = /^\./u;
 
@@ -140,4 +140,4 @@ const tawata = (dirpath, options) => {
   });
 };
 
-module.exports = tawata;
+export default tawata;

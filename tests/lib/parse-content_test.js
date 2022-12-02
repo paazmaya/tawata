@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  parseContent = require('../../lib/parse-content');
+import tape from 'tape';
+import parseContent from '../../lib/parse-content.js';
 
 tape('parseContent - returns self if no encoding', (test) => {
   test.plan(1);

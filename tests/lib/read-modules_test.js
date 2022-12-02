@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  readModules = require('../../lib/read-modules');
+import tape from 'tape';
+import readModules from '../../lib/read-modules.js';
 
 tape('readModules - empty list', (test) => {
 

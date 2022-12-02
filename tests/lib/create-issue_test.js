@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  createIssue = require('../../lib/create-issue');
+import tape from 'tape';
+import createIssue from '../../lib/create-issue.js';
 
 tape('createIssue - Function takes two arguments', (test) => {
   test.plan(1);

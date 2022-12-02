@@ -1,6 +1,6 @@
 
-const tape = require('tape'),
-  parseJson = require('../../lib/parse-json');
+import tape from 'tape';
+import parseJson from '../../lib/parse-json.js';
 
 tape('parseJson - not json input', (test) => {
   test.plan(1);
