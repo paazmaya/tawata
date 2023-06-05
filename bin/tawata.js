@@ -13,14 +13,15 @@
  * Licensed under the MIT license
  */
 
-
 import path from 'path';
 
 import optionator from 'optionator';
 
 import tawata from '../index.js';
 
-import PKG from '../package.json' assert { type: 'json' };
+/* import PKG from '../package.json' assert { type: 'json' };*/
+const packageFile = new URL('../package.json', import.meta.url);
+const PKG = JSON.parse(fs.readFileSync(packageFile, 'utf8'));
 
 const optsParser = optionator({
   prepend: `Usage: ${PKG.name} [options] <target path, defaults to './node_modules'>`,
