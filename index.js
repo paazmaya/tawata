@@ -11,8 +11,8 @@
  * Licensed under the MIT license
  */
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import readlineSync from 'readline-sync';
 

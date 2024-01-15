@@ -1,5 +1,5 @@
 
-import path from 'path';
+import path from 'node:path';
 
 import tape from 'tape';
 import readPackage from '../../lib/read-package.js';
