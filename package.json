@@ -4,7 +4,9 @@
   "description": "Check whitelist/blacklist of included files for each dependency and create issues when needed",
   "main": "index.js",
   "type": "module",
-  "bin": "bin/tawata.js",
+  "bin": {
+    "tawata": "bin/tawata.js"
+  },
   "scripts": {
     "lint": "eslint *.js bin lib",
     "coverage": "c8 --all --exclude tests report --reporter=text-lcov > coverage.lcov && codecov",
