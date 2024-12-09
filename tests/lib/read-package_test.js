@@ -1,4 +1,3 @@
-
 import path from 'node:path';
 
 import tape from 'tape';
@@ -17,7 +16,7 @@ tape('readPackage - file does not exist', (test) => {
 tape('readPackage - file does exist', (test) => {
   test.plan(1);
 
-  const input = path.join(__dirname, '..', '..');
+  const input = path.join(new URL('.', import.meta.url).pathname, '..', '..');
 
   const output = readPackage(input);
 
