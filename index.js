@@ -40,7 +40,7 @@ const findModules = (dirpath) => {
 
         return stat.isDirectory();
       }
-      catch (error) {
+      catch {
         return false;
       }
     })
@@ -50,7 +50,7 @@ const findModules = (dirpath) => {
 
         return true;
       }
-      catch (error) {
+      catch {
         return false;
       }
     });
