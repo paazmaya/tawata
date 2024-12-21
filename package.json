@@ -49,9 +49,9 @@
   "devDependencies": {
     "c8": "7.14.0",
     "codecov": "3.8.3",
-    "eslint": "9.16.0",
+    "eslint": "9.17.0",
     "eslint-config-paazmaya": "9.0.1",
-    "eslint-plugin-n": "17.14.0",
+    "eslint-plugin-n": "17.15.1",
     "tape": "5.9.0"
   }
 }
