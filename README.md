@@ -16,11 +16,13 @@ This tool will get a list of all the [Node.js](https://nodejs.org/en/) dependenc
 In order to see if the resulting package becomes any smaller, test it before by creating the package with [the command `npm pack`](https://docs.npmjs.com/cli/pack), then rename the resulting file so it would not be overwritten.
 Then add the limitations and create the package again and see the file size difference.
 
-## Background for the name
+## Background for the project name
 
 The name of the project is for honouring the legacy of a late master, Mr Tawata from the Ryukyu archipelago, who contributed to the martial arts that we today know as **karate** and **ryukyu kobujutsu**.
 
 There are forms carrying his name, such as "Tawata no Passai" and ["Tawata no Sai"](https://www.youtube.com/watch?v=YAQlFJIj32E), which both have distinctive use of a stance called "nekoashidachi" and sweeping motion related to the given stance.
+
+[Read more about why these martial arts are important for me at `karatejukka.fi`.](https://karatejukka.fi)
 
 ## Roadmap
 
