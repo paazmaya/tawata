@@ -1,8 +1,11 @@
 # JavaScript Node CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-javascript/ for more details
-#
-version: 2
+# https://circleci.com/docs/language-javascript/
+version: 2.1
+
+# https://circleci.com/developer/orbs/orb/codecov/codecov
+orbs:
+  codecov: codecov/codecov@5.0.3
+
 jobs:
   build:
     docker:
@@ -31,3 +34,9 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run coverage
+      - codecov/upload
+
+workflows:
+  upload-to-codecov:
+    jobs:
+      - build
