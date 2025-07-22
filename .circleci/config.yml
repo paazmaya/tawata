@@ -10,7 +10,7 @@ jobs:
   build:
     docker:
       # https://circleci.com/developer/images/image/cimg/node
-      - image: cimg/node:22.12.0
+      - image: cimg/node:24.12.0
 
     working_directory: ~/repo
 
@@ -20,16 +20,16 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v22-dependencies-{{ checksum "package.json" }}
+          - v24-dependencies-{{ checksum "package.json" }}
           # fallback to using the latest cache if no exact match is found
-          - v22-dependencies-
+          - v24-dependencies-
 
       - run: npm install
 
       - save_cache:
           paths:
             - node_modules
-          key: v22-dependencies-{{ checksum "package.json" }}
+          key: v24-dependencies-{{ checksum "package.json" }}
 
       - run: npm run lint
       - run: npm test
