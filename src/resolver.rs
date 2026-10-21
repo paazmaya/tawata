@@ -17,7 +17,7 @@ pub fn resolve_inputs(input: &str, recursive: bool) -> Result<Vec<PathBuf>> {
     } else {
         let path = Path::new(input);
         if path.is_dir() {
-            let depth = if recursive { std::usize::MAX } else { 1 };
+            let depth = if recursive { usize::MAX } else { 1 };
             for entry in WalkDir::new(path).max_depth(depth) {
                 let entry = entry?;
                 if entry.file_type().is_file() {
