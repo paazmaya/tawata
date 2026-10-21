@@ -22,7 +22,8 @@ pub fn resolve_inputs(input: &str, recursive: bool) -> Result<Vec<PathBuf>> {
                 let entry = entry?;
                 if entry.file_type().is_file() {
                     if let Some(ext) = entry.path().extension() {
-                        if ext.to_string_lossy().to_lowercase() == "epub" {
+                        let ext_str = ext.to_string_lossy().to_lowercase();
+                        if matches!(ext_str.as_str(), "epub" | "mobi" | "djvu" | "djv") {
                             paths.push(entry.into_path());
                         }
                     }

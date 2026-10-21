@@ -16,6 +16,8 @@ env_logger = "0.11.11"
 
 epub = "2.1.0"
 mobi = "0.8.0"
+djvu-rs = "0.43"
+
 
 # OXC Native Markdown Formatting
 oxc_allocator = { git = "https://github.com/oxc-project/oxc.git", branch = "main" }

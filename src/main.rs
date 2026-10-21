@@ -3,10 +3,11 @@ use clap::Parser;
 
 mod epub_converter;
 mod mobi_converter;
+mod djvu_converter;
 mod resolver; // New module
 
 #[derive(Parser, Debug)]
-#[command(author, version, about = "Converts Ebooks (EPUB, MOBI) to Markdown.")]
+#[command(author, version, about = "Converts Ebooks (EPUB, MOBI, DJVU) to Markdown.")]
 struct Cli {
     /// Input ebook file, glob pattern (e.g. "*.epub"), or directory
     #[arg(required = true)]
@@ -42,6 +43,10 @@ fn main() -> Result<()> {
             Some("epub") => epub_converter::process_epub(&path, cli.autocorrect, cli.oxfmt),
 
             Some("mobi") => mobi_converter::process_mobi(&path, cli.autocorrect, cli.oxfmt),
+
+            Some("djvu") | Some("djv") => {
+                djvu_converter::process_djvu(&path, cli.autocorrect, cli.oxfmt)
+            }
 
             // Handle other formats here in the future (e.g., AZW3 via kindling-mobi later)
             Some(ext) => {

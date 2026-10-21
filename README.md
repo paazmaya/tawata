@@ -1,6 +1,6 @@
 # tawata (多和田)
 
-> Convert epub and mobi files to markdown files
+> Convert epub, mobi, and djvu files to markdown files
 
 [![CircleCI](https://circleci.com/gh/paazmaya/tawata.svg?style=svg)](https://circleci.com/gh/paazmaya/tawata)
 [![codecov](https://codecov.io/gh/paazmaya/tawata/branch/master/graph/badge.svg)](https://codecov.io/gh/paazmaya/tawata)
