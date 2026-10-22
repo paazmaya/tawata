@@ -1,76 +1,70 @@
 use anyhow::{Context, Result};
 use djvu_rs::Document;
-use regex::Regex;
-use std::fs;
 use std::path::Path;
+
+use crate::common::{prepare_output_dirs, save_markdown_page};
+
+/// Formats the extracted page text into markdown, providing a placeholder if no text was found.
+pub fn format_page_markdown(page_num: usize, text: &str) -> String {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        format!(
+            "# Page {}\n\n*(No text layer found on this page)*\n",
+            page_num
+        )
+    } else {
+        format!("# Page {}\n\n{}\n", page_num, trimmed)
+    }
+}
 
 pub fn process_djvu(djvu_path: &Path, autocorrect: bool, oxfmt: bool) -> Result<()> {
     // 1. Open DJVU
     let doc = Document::open(djvu_path).context("Failed to open DJVU file")?;
 
     // 2. Create output directory next to the DJVU file
-    let file_stem = djvu_path.file_stem().unwrap().to_str().unwrap();
-    let parent = djvu_path.parent().unwrap_or_else(|| Path::new("."));
-    let out_dir = parent.join(file_stem);
-
-    if !out_dir.exists() {
-        fs::create_dir(&out_dir)?;
-    }
+    let (out_dir, _) = prepare_output_dirs(djvu_path, false)?;
 
     let page_count = doc.page_count();
     println!("Extracting {} pages from DJVU...", page_count);
 
     for i in 0..page_count {
-        let page = doc.page(i).context(format!("Failed to read page {}", i + 1))?;
+        let page = doc
+            .page(i)
+            .context(format!("Failed to read page {}", i + 1))?;
         let text = if let Some(layer) = page.text_layer()? {
             layer.text
         } else {
             String::new()
         };
 
-        let mut content = if text.trim().is_empty() {
-            format!("# Page {}\n\n*(No text layer found on this page)*\n", i + 1)
-        } else {
-            format!("# Page {}\n\n{}\n", i + 1, text.trim())
-        };
+        let content = format_page_markdown(i + 1, &text);
 
-        // 3. Autocorrect logic
-        if autocorrect {
-            content = apply_autocorrect(&content);
-        }
-
-        // 4. Write to file
-        let md_file = out_dir.join(format!("page_{:03}.md", i + 1));
-        fs::write(&md_file, content)?;
-
-        // 5. Format with oxfmt
-        if oxfmt {
-            format_with_oxfmt(&md_file)?;
-        }
+        save_markdown_page(&out_dir, "page", i + 1, &content, autocorrect, oxfmt)?;
     }
 
     println!("Successfully converted DJVU to {:?}", out_dir);
     Ok(())
 }
 
-fn apply_autocorrect(text: &str) -> String {
-    let text = autocorrect::format(text);
-    let re = Regex::new(r"(?P<word>\b\w(?: \w)+\b)").unwrap();
-    let cleaned = re.replace_all(&text, |caps: &regex::Captures| {
-        caps.name("word").unwrap().as_str().replace(" ", "")
-    });
-    let multi_space = Regex::new(r" {2,}").unwrap();
-    multi_space.replace_all(&cleaned, " ").into_owned()
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-fn format_with_oxfmt(md_path: &Path) -> Result<()> {
-    let status = std::process::Command::new("oxfmt")
-        .arg(md_path.to_str().unwrap())
-        .status()
-        .context("Failed to run oxfmt. Ensure it is installed globally (npm i -g oxfmt).")?;
+    #[test]
+    fn test_format_page_markdown_empty_text() {
+        let md = format_page_markdown(1, "");
+        assert_eq!(md, "# Page 1\n\n*(No text layer found on this page)*\n");
 
-    if !status.success() {
-        eprintln!("Warning: oxfmt failed to format {:?}", md_path);
+        let md_whitespace = format_page_markdown(2, "   \n\t  ");
+        assert_eq!(
+            md_whitespace,
+            "# Page 2\n\n*(No text layer found on this page)*\n"
+        );
     }
-    Ok(())
+
+    #[test]
+    fn test_format_page_markdown_with_text() {
+        let md = format_page_markdown(5, "This is page five content.");
+        assert_eq!(md, "# Page 5\n\nThis is page five content.\n");
+    }
 }

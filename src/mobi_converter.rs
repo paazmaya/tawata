@@ -1,106 +1,114 @@
 use anyhow::{Context, Result};
-use regex::Regex;
 use std::fs;
 use std::path::Path;
+
+use crate::common::{prepare_output_dirs, rewrite_markdown_image_links, save_markdown_page};
+
+/// Splits raw markdown converted from MOBI HTML into chapters based on markdown H1 headers.
+pub fn split_mobi_chapters(markdown: &str) -> Vec<String> {
+    let raw_parts = markdown.split("\n# ").collect::<Vec<&str>>();
+
+    raw_parts
+        .iter()
+        .enumerate()
+        .map(|(i, chapter)| {
+            if i == 0 {
+                chapter.to_string()
+            } else {
+                format!("# {}\n", chapter)
+            }
+        })
+        .collect()
+}
+
+/// Converts continuous MOBI HTML into separate chapter markdown strings with rewritten image links.
+pub fn convert_mobi_html_to_chapters(html_content: &str) -> Vec<String> {
+    let md_content = html2md::parse_html(html_content);
+    let md_fixed = rewrite_markdown_image_links(&md_content, "./images");
+    split_mobi_chapters(&md_fixed)
+}
+
+/// Extracts images embedded in the MOBI document into the destination `images` directory.
+fn extract_images(doc: &mobi::Mobi, img_dir: &Path) -> Result<usize> {
+    let records = doc.image_records();
+    for (i, image) in records.iter().enumerate() {
+        let img_name = format!("image_{:03}.jpg", i);
+        let img_path = img_dir.join(img_name);
+        fs::write(img_path, image.content)?;
+    }
+    Ok(records.len())
+}
 
 pub fn process_mobi(mobi_path: &Path, autocorrect: bool, oxfmt: bool) -> Result<()> {
     // 1. Open and Parse the MOBI file
     let doc = mobi::Mobi::from_path(mobi_path).context("Failed to parse MOBI file")?;
 
     // 2. Create output directory next to the file
-    let file_stem = mobi_path.file_stem().unwrap().to_str().unwrap();
-    let parent = mobi_path.parent().unwrap_or_else(|| Path::new("."));
-    let out_dir = parent.join(file_stem);
-
-    if !out_dir.exists() {
-        fs::create_dir(&out_dir)?;
-    }
-    let img_dir = out_dir.join("images");
-    if !img_dir.exists() {
-        fs::create_dir(&img_dir)?;
-    }
+    let (out_dir, img_dir) = prepare_output_dirs(mobi_path, true)?;
 
     // 3. Extract Images
-    for (i, image) in doc.image_records().iter().enumerate() {
-        let img_name = format!("image_{:03}.jpg", i);
-        let img_path = img_dir.join(img_name);
-
-        fs::write(img_path, image.content)?;
+    if let Some(ref img_dir) = img_dir {
+        extract_images(&doc, img_dir)?;
     }
 
-    // 4. Extract Text/HTML
-    // MOBI files store text as a single continuous stream of HTML.
-    // We must extract it and split it into manageable Markdown files.
+    // 4. Extract Text/HTML and convert to chapters
     let raw_html = doc
         .content_as_string()
         .context("Failed to extract content from MOBI")?;
-    let md_content = html2md::parse_html(&raw_html);
-
-    // Fix image paths to point to our local ./images/ folder
-    let img_regex = Regex::new(r"(!\[[^\]]*\])\([^)]*?([^/\\]+)\)").unwrap();
-    let md_fixed = img_regex
-        .replace_all(&md_content, |caps: &regex::Captures| {
-            let alt_part = caps.get(1).unwrap().as_str();
-            let filename = caps.get(2).unwrap().as_str();
-            let is_image = filename.to_lowercase().ends_with(".jpg")
-                || filename.to_lowercase().ends_with(".png");
-            if is_image {
-                format!("{}(./images/{})", alt_part, filename)
-            } else {
-                caps.get(0).unwrap().as_str().to_string()
-            }
-        })
-        .into_owned();
-
-    // 5. Split into chapters (Heuristic: Split on Markdown H1 or Page Breaks)
-    let chapters = md_fixed.split("\n# ").collect::<Vec<&str>>();
+    let chapters = convert_mobi_html_to_chapters(&raw_html);
 
     for (i, chapter) in chapters.iter().enumerate() {
-        let mut content = if i == 0 && !chapter.starts_with("# ") {
-            chapter.to_string()
-        } else {
-            format!("# {}\n", chapter)
-        };
-
-        // Apply Autocorrect
-        if autocorrect {
-            content = apply_autocorrect(&content);
-        }
-
-        // Write to file
-        let md_file = out_dir.join(format!("chapter_{:03}.md", i + 1));
-        fs::write(&md_file, content)?;
-
-        // Format with oxfmt
-        if oxfmt {
-            format_with_oxfmt(&md_file)?;
-        }
+        save_markdown_page(&out_dir, "chapter", i + 1, chapter, autocorrect, oxfmt)?;
     }
 
     println!("Successfully converted MOBI to {:?}", out_dir);
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-
-fn apply_autocorrect(text: &str) -> String {
-    let text = autocorrect::format(text);
-    let re = Regex::new(r"(?P<word>\b\w(?: \w)+\b)").unwrap();
-    let cleaned = re.replace_all(&text, |caps: &regex::Captures| {
-        caps.name("word").unwrap().as_str().replace(" ", "")
-    });
-    let multi_space = Regex::new(r" {2,}").unwrap();
-    multi_space.replace_all(&cleaned, " ").into_owned()
-}
-
-fn format_with_oxfmt(md_path: &Path) -> Result<()> {
-    let status = std::process::Command::new("oxfmt")
-        .arg(md_path.to_str().unwrap())
-        .status()
-        .context("Failed to run oxfmt. Ensure it is installed globally (npm i -g oxfmt).")?;
-
-    if !status.success() {
-        eprintln!("Warning: oxfmt failed to format {:?}", md_path);
+    #[test]
+    fn test_split_mobi_chapters_single_without_heading() {
+        let input = "Just introductory text without any headings.";
+        let chapters = split_mobi_chapters(input);
+        assert_eq!(chapters.len(), 1);
+        assert_eq!(chapters[0], "Just introductory text without any headings.");
     }
-    Ok(())
+
+    #[test]
+    fn test_split_mobi_chapters_starts_with_heading() {
+        let input = "# Chapter 1\nText 1\n# Chapter 2\nText 2";
+        let chapters = split_mobi_chapters(input);
+        assert_eq!(chapters.len(), 2);
+        assert_eq!(chapters[0], "# Chapter 1\nText 1");
+        assert_eq!(chapters[1], "# Chapter 2\nText 2\n");
+    }
+
+    #[test]
+    fn test_split_mobi_chapters_with_intro_and_headings() {
+        let input = "Intro\n# Chapter 1\nFirst";
+        let chapters = split_mobi_chapters(input);
+        assert_eq!(chapters.len(), 2);
+        assert_eq!(chapters[0], "Intro");
+        assert_eq!(chapters[1], "# Chapter 1\nFirst\n");
+    }
+
+    #[test]
+    fn test_convert_mobi_html_to_chapters() {
+        let html = "<p>Intro</p><p>Chapter text</p>";
+        let chapters = convert_mobi_html_to_chapters(html);
+        assert_eq!(chapters.len(), 1);
+        assert!(chapters[0].contains("Intro"));
+        assert!(chapters[0].contains("Chapter text"));
+    }
+
+    #[test]
+    fn test_convert_mobi_html_to_chapters_with_image() {
+        let html = r#"<p>Some text</p><img src="cover.jpg" alt="Cover" />"#;
+        let chapters = convert_mobi_html_to_chapters(html);
+        assert_eq!(chapters.len(), 1);
+        assert!(chapters[0].contains("![Cover](./images/cover.jpg)"));
+    }
 }
