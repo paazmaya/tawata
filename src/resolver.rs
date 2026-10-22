@@ -97,6 +97,31 @@ mod tests {
     }
 
     #[test]
+    fn test_resolve_inputs_file_dir_and_glob() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let test_dir = std::env::temp_dir().join(format!("resolver_inputs_test_{}", nanos));
+        fs::create_dir_all(&test_dir).unwrap();
+        let book = test_dir.join("a.epub");
+        File::create(&book).unwrap();
+        File::create(test_dir.join("b.kfx")).unwrap();
+
+        let single = resolve_inputs(book.to_str().unwrap(), false).unwrap();
+        assert_eq!(single, vec![book]);
+
+        let dir = resolve_inputs(test_dir.to_str().unwrap(), false).unwrap();
+        assert_eq!(dir.len(), 2);
+
+        let pattern = format!("{}/*.kfx", test_dir.to_str().unwrap());
+        let globbed = resolve_inputs(&pattern, false).unwrap();
+        assert_eq!(globbed.len(), 1);
+
+        let _ = fs::remove_dir_all(&test_dir);
+    }
+
+    #[test]
     fn test_resolve_inputs_nonexistent() {
         let result = resolve_inputs("non_existent_file_path_12345.epub", false);
         assert!(result.is_err());

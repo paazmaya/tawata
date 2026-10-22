@@ -1,4 +1,6 @@
 use anyhow::{Context, Result};
+use oxc_allocator::Allocator;
+use oxc_formatter_markdown::MarkdownFormatOptions;
 use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -16,7 +18,7 @@ static MARKDOWN_IMAGE_RE: LazyLock<Regex> =
 pub fn is_supported_ebook_ext(ext: &str) -> bool {
     matches!(
         ext.to_ascii_lowercase().as_str(),
-        "epub" | "mobi" | "djvu" | "djv"
+        "epub" | "mobi" | "azw3" | "azw" | "kfx" | "djvu" | "djv"
     )
 }
 
@@ -74,6 +76,12 @@ pub fn format_page_filename(prefix: &str, index: usize) -> String {
     format!("{}_{:03}.md", prefix, index)
 }
 
+/// Reads an input ebook fully into memory. The file is only ever opened read-only
+/// and is never held open or memory-mapped afterwards, so it cannot be modified.
+pub fn read_input_file(path: &Path) -> Result<Vec<u8>> {
+    fs::read(path).with_context(|| format!("Failed to read input file: {:?}", path))
+}
+
 /// Determines the output directory path alongside the source file.
 pub fn determine_output_dir(input_path: &Path) -> PathBuf {
     let file_stem = input_path
@@ -90,6 +98,12 @@ pub fn prepare_output_dirs(
     need_images: bool,
 ) -> Result<(PathBuf, Option<PathBuf>)> {
     let out_dir = determine_output_dir(input_path);
+    if out_dir == input_path {
+        anyhow::bail!(
+            "Refusing to use the input file itself as output directory: {:?}",
+            input_path
+        );
+    }
     if !out_dir.exists() {
         fs::create_dir_all(&out_dir)
             .with_context(|| format!("Failed to create output directory: {:?}", out_dir))?;
@@ -118,21 +132,17 @@ pub fn prepare_markdown_content(content: &str, autocorrect: bool) -> String {
     }
 }
 
-/// Formats a markdown file using external `oxfmt` CLI.
-pub fn format_with_oxfmt(md_path: &Path) -> Result<()> {
-    let path_str = md_path
-        .to_str()
-        .with_context(|| format!("Invalid UTF-8 in path: {:?}", md_path))?;
+/// Formats markdown text in-process with the `oxc_formatter_markdown` crate.
+pub fn format_with_oxfmt(content: &str) -> Result<String> {
+    let allocator = Allocator::new();
+    let formatted =
+        oxc_formatter_markdown::format(&allocator, content, MarkdownFormatOptions::default())
+            .map_err(|e| anyhow::anyhow!("Markdown formatting failed: {}", e.render()))?;
 
-    let status = std::process::Command::new("oxfmt")
-        .arg(path_str)
-        .status()
-        .context("Failed to run oxfmt. Ensure it is installed globally (npm i -g oxfmt).")?;
-
-    if !status.success() {
-        eprintln!("Warning: oxfmt failed to format {:?}", md_path);
-    }
-    Ok(())
+    let printed = formatted
+        .print()
+        .map_err(|e| anyhow::anyhow!("Markdown printing failed: {:?}", e))?;
+    Ok(printed.into_code())
 }
 
 /// Writes markdown content to `{out_dir}/{prefix}_{index:03}.md`, applying autocorrect
@@ -145,16 +155,35 @@ pub fn save_markdown_page(
     autocorrect: bool,
     oxfmt: bool,
 ) -> Result<PathBuf> {
-    let prepared = prepare_markdown_content(content, autocorrect);
-    let filename = format_page_filename(prefix, index);
+    save_markdown_file(
+        out_dir,
+        &format_page_filename(prefix, index),
+        content,
+        autocorrect,
+        oxfmt,
+    )
+}
+
+/// Writes markdown content to `{out_dir}/{filename}`, applying autocorrect
+/// and oxfmt formatting if requested.
+pub fn save_markdown_file(
+    out_dir: &Path,
+    filename: &str,
+    content: &str,
+    autocorrect: bool,
+    oxfmt: bool,
+) -> Result<PathBuf> {
+    let mut prepared = prepare_markdown_content(content, autocorrect);
+    if oxfmt {
+        match format_with_oxfmt(&prepared) {
+            Ok(formatted) => prepared = formatted,
+            Err(e) => eprintln!("Warning: formatting skipped for {}: {}", filename, e),
+        }
+    }
     let md_file = out_dir.join(filename);
 
     fs::write(&md_file, prepared)
         .with_context(|| format!("Failed to write markdown file: {:?}", md_file))?;
-
-    if oxfmt {
-        format_with_oxfmt(&md_file)?;
-    }
 
     Ok(md_file)
 }
@@ -265,12 +294,103 @@ mod tests {
     }
 
     #[test]
+    fn test_format_with_oxfmt() {
+        assert_eq!(format_with_oxfmt("#  Title").unwrap(), "# Title\n");
+    }
+
+    #[test]
+    fn test_save_markdown_file_with_oxfmt() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let temp_dir = std::env::temp_dir().join(format!("tawata_fmt_test_{}", nanos));
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let written = save_markdown_file(&temp_dir, "book.md", "#  Book", false, true).unwrap();
+        assert_eq!(fs::read_to_string(&written).unwrap(), "# Book\n");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_apply_autocorrect() {
+        let out = apply_autocorrect("Hello    w o r l d");
+        assert_eq!(out, "Hello world");
+    }
+
+    #[test]
+    fn test_is_supported_ebook_ext_kindle_formats() {
+        for ext in ["azw3", "AZW", "kfx"] {
+            assert!(is_supported_ebook_ext(ext));
+        }
+    }
+
+    #[test]
+    fn test_save_markdown_file() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let temp_dir = std::env::temp_dir().join(format!("tawata_file_test_{}", nanos));
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let written = save_markdown_file(&temp_dir, "book.md", "# Book", false, false).unwrap();
+        assert_eq!(written.file_name().unwrap(), "book.md");
+        assert_eq!(fs::read_to_string(&written).unwrap(), "# Book");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_read_input_file_is_read_only() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let temp_dir = std::env::temp_dir().join(format!("tawata_read_test_{}", nanos));
+        fs::create_dir_all(&temp_dir).unwrap();
+        let file = temp_dir.join("book.epub");
+        fs::write(&file, b"data").unwrap();
+
+        let mut perms = fs::metadata(&file).unwrap().permissions();
+        perms.set_readonly(true);
+        fs::set_permissions(&file, perms).unwrap();
+
+        assert_eq!(read_input_file(&file).unwrap(), b"data");
+        assert!(read_input_file(&temp_dir.join("missing.epub")).is_err());
+
+        let mut perms = fs::metadata(&file).unwrap().permissions();
+        #[allow(clippy::permissions_set_readonly_false)]
+        perms.set_readonly(false);
+        fs::set_permissions(&file, perms).unwrap();
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_prepare_output_dirs_refuses_input_path() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let temp_dir = std::env::temp_dir().join(format!("tawata_guard_test_{}", nanos));
+        fs::create_dir_all(&temp_dir).unwrap();
+        let no_ext = temp_dir.join("book");
+        fs::write(&no_ext, b"data").unwrap();
+
+        assert!(prepare_output_dirs(&no_ext, false).is_err());
+        assert_eq!(fs::read(&no_ext).unwrap(), b"data");
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
     fn test_prepare_output_dirs_and_save_page() {
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let temp_dir = std::env::temp_dir().join(format!("ebook2md_test_{}", nanos));
+        let temp_dir = std::env::temp_dir().join(format!("tawata_test_{}", nanos));
         let fake_input = temp_dir.join("test_book.epub");
 
         let (out_dir, img_dir) = prepare_output_dirs(&fake_input, true).unwrap();

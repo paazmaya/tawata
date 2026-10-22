@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use djvu_rs::Document;
 use std::path::Path;
 
-use crate::common::{prepare_output_dirs, save_markdown_page};
+use crate::common::{prepare_output_dirs, read_input_file, save_markdown_page};
 
 /// Formats the extracted page text into markdown, providing a placeholder if no text was found.
 pub fn format_page_markdown(page_num: usize, text: &str) -> String {
@@ -17,9 +17,11 @@ pub fn format_page_markdown(page_num: usize, text: &str) -> String {
     }
 }
 
+/// Converts a DJVU file to one markdown file per page using its text layer.
 pub fn process_djvu(djvu_path: &Path, autocorrect: bool, oxfmt: bool) -> Result<()> {
     // 1. Open DJVU
-    let doc = Document::open(djvu_path).context("Failed to open DJVU file")?;
+    let data = read_input_file(djvu_path)?;
+    let doc = Document::from_bytes(data).context("Failed to open DJVU file")?;
 
     // 2. Create output directory next to the DJVU file
     let (out_dir, _) = prepare_output_dirs(djvu_path, false)?;
@@ -49,6 +51,39 @@ pub fn process_djvu(djvu_path: &Path, autocorrect: bool, oxfmt: bool) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_process_djvu_minimal_page_without_text() {
+        let mut data = b"AT&TFORM".to_vec();
+        data.extend_from_slice(&22u32.to_be_bytes());
+        data.extend_from_slice(b"DJVUINFO");
+        data.extend_from_slice(&10u32.to_be_bytes());
+        data.extend_from_slice(&[0, 10, 0, 10, 24, 0, 100, 0, 22, 0]);
+
+        let dir = std::env::temp_dir().join(format!("tawata_djvu_min_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("min.djvu");
+        std::fs::write(&path, data).unwrap();
+        assert!(process_djvu(&path, false, false).is_ok());
+        assert!(dir.join("min").exists() || std::fs::read_dir(&dir).unwrap().count() > 1);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_process_djvu_invalid_content() {
+        let dir = std::env::temp_dir().join(format!("tawata_djvu_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("broken.djvu");
+        std::fs::write(&path, b"not a djvu").unwrap();
+        assert!(process_djvu(&path, false, false).is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_process_djvu_missing_file() {
+        let result = process_djvu(Path::new("does_not_exist_12345.djvu"), false, false);
+        assert!(result.is_err());
+    }
 
     #[test]
     fn test_format_page_markdown_empty_text() {

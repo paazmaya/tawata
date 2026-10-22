@@ -1,40 +1,53 @@
-# JavaScript Node CircleCI 2.0 configuration file
-# https://circleci.com/docs/language-javascript/
+# Rust CircleCI configuration file
 version: 2.1
 
-# https://circleci.com/developer/orbs/orb/codecov/codecov
 orbs:
-  codecov: codecov/codecov@5.0.3
+  # https://circleci.com/developer/orbs/orb/codecov/codecov
+  codecov: codecov/codecov@6.1.0
 
 jobs:
   build:
     docker:
-      # https://circleci.com/developer/images/image/cimg/node
-      - image: cimg/node:24.12.0
+      # https://circleci.com/developer/images/image/cimg/rust
+      - image: cimg/rust:1.99
 
     working_directory: ~/repo
 
     steps:
       - checkout
 
-      # Download and cache dependencies
       - restore_cache:
           keys:
-          - v24-dependencies-{{ checksum "package.json" }}
-          # fallback to using the latest cache if no exact match is found
-          - v24-dependencies-
+            - v1-rust-{{ checksum "Cargo.lock" }}
+            - v1-rust-
 
-      - run: npm install
+      - run:
+          name: Install Rust tools
+          command: |
+            rustup component add clippy rustfmt
+            cargo install cargo-tarpaulin --locked
+
+      - run:
+          name: Check formatting
+          command: cargo fmt --all -- --check
+
+      - run:
+          name: Run Clippy
+          command: cargo clippy --all-targets --all-features -- -D warnings
+
+      - run:
+          name: Generate coverage
+          command: cargo tarpaulin --out Xml
+
+      - codecov/upload
 
       - save_cache:
           paths:
-            - node_modules
-          key: v24-dependencies-{{ checksum "package.json" }}
-
-      - run: npm run lint
-      - run: npm test
-      - run: npm run coverage
-      - codecov/upload
+            - /usr/local/cargo/registry
+            - /usr/local/cargo/git
+            - /usr/local/cargo/bin
+            - target
+          key: v1-rust-{{ checksum "Cargo.lock" }}
 
 workflows:
   upload-to-codecov:
