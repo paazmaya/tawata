@@ -1,25 +1,28 @@
 [package]
 name = "tawata"
+description = "Convert various ebook formats to markdown at command line"
 version = "0.1.0"
 edition = "2021"
+homepage = "https://github.com/paazmaya/tawata"
+repository = "https://github.com/paazmaya/tawata"
+license = "MIT"
 
 [dependencies]
-clap = { version = "4.6", features = ["derive"] }
-glob = "0.3"
-walkdir = "2.0"
-regex = "1.0"
-autocorrect = "2.14"
-anyhow = "1.0"
-log = "0.4"
+clap = { version = "4.6.7", features = ["derive"] }
+glob = "0.3.4"
+walkdir = "2.5.0"
+regex = "1.13.1"
+autocorrect = "2.14.2"
+anyhow = "1.0.104"
+log = "0.4.34"
 env_logger = "0.11.11"
 
-djvu-rs = "0.43"
-boko = "0.5"
-
+djvu-rs = "0.43.0"
+boko = "0.5.0"
 
 # OXC Native Markdown Formatting
-oxc_allocator = { git = "https://github.com/oxc-project/oxc.git", branch = "main" }
-oxc_formatter_markdown = { git = "https://github.com/oxc-project/oxc.git", branch = "main" }
+oxc_allocator = { git = "https://github.com/oxc-project/oxc.git", rev = "0e6498f7e218420153910074d5a55bbef7c1c1d4" }
+oxc_formatter_markdown = { git = "https://github.com/oxc-project/oxc.git", rev = "0e6498f7e218420153910074d5a55bbef7c1c1d4" }
 
 [patch.crates-io]
-oxc_allocator = { git = "https://github.com/oxc-project/oxc.git", branch = "main" }
+oxc_allocator = { git = "https://github.com/oxc-project/oxc.git", rev = "0e6498f7e218420153910074d5a55bbef7c1c1d4" }

@@ -12,27 +12,29 @@ mod resolver;
 #[command(
     author,
     version,
-    about = "Converts Ebooks (EPUB, MOBI, AZW3, KFX, DJVU) to Markdown."
+    about = "Converts EPUB, MOBI, AZW3, AZW, KFX, DJVU, and DJV ebooks to Markdown."
 )]
 struct Cli {
-    /// Input ebook file, glob pattern (e.g. "*.epub"), or directory
+    /// Ebook file, glob pattern containing `*`, or directory. Supported formats:
+    /// EPUB, MOBI, AZW3, AZW, KFX, DJVU, and DJV. Directories are scanned at the
+    /// top level unless --recursive is used.
     #[arg(required = true)]
     input: String,
 
-    /// Search directories recursively
+    /// Search directories and all their subdirectories for supported ebook files
     #[arg(short, long)]
     recursive: bool,
 
-    /// Apply CJK/Western spacing fixes and merge split words
+    /// Fix CJK/Western spacing and merge words split by spaces (may affect short phrases)
     #[arg(short, long)]
     autocorrect: bool,
 
-    /// Skip formatting the output with the OXC markdown formatter
+    /// Skip OXC Markdown formatting (formatting is enabled by default)
     #[arg(long)]
     no_oxfmt: bool,
 
-    /// Write the whole book to a single book.md instead of one file per chapter
-    /// (does not apply to DJVU)
+    /// Write supported ebook formats to book.md instead of one file per chapter;
+    /// DJVU always produces one Markdown file per page
     #[arg(long)]
     single_file: bool,
 }

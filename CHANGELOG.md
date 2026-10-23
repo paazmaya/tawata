@@ -3,10 +3,13 @@
 This changelog covers the version history and possible upcoming changes.
 It follows the guidance from https://keepachangelog.com/en/1.0.0/.
 
-## Unreleased `v0.1.0` (2018-11-)
+## `v0.1.0` (2026-10-23)
 
-- Migrate linting from ESLint to Oxlint with nursery rules enabled
-- Remove ESLint, eslint-config-paazmaya, and related dependencies
-
-- Use [`npm-shrinkwrap.json`](https://docs.npmjs.com/files/shrinkwrap.json) for locking the working set of 3rd party dependencies
-- Initial functionality which checks for existence of `files` property and `.npmignore` file
+- Convert EPUB, MOBI, AZW3, AZW, and KFX ebooks to Markdown.
+- Convert DJVU and DJV documents to one Markdown file per page using their text layers.
+- Accept an ebook file, a `*` glob pattern, or a directory of ebooks; optionally search directories recursively.
+- Write ebook content as one Markdown file per chapter by default, or as `book.md` with `--single-file`. If chapter boundaries cannot be identified reliably, write `book.md` instead.
+- Extract ebook images to an `images/` subdirectory and rewrite Markdown image links to use those files.
+- Optionally correct CJK/Western spacing and join words split by spaces with `--autocorrect`.
+- Format generated Markdown with the OXC Markdown formatter by default; `--no-oxfmt` disables formatting.
+- Keep input files unchanged and write converted content to a separate output directory named after the input file's stem.
