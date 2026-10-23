@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use oxc_allocator::Allocator;
+use oxc::allocator::Allocator;
 use oxc_formatter_markdown::MarkdownFormatOptions;
 use regex::Regex;
 use std::fs;
