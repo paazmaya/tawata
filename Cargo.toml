@@ -21,8 +21,8 @@ djvu-rs = "0.43.0"
 boko = "0.5.0"
 
 # OXC Native Markdown Formatting
-oxc = { version = "0.155.0", features = ["full"] }
-oxc_formatter_markdown = { git = "https://github.com/oxc-project/oxc.git", rev = "0e6498f7e218420153910074d5a55bbef7c1c1d4" }
+oxc_allocator = "0.156.0"
+oxc_formatter_markdown = { git = "https://github.com/oxc-project/oxc.git", tag = "crates_v0.156.0" }
 
 [patch.crates-io]
-oxc_allocator = { git = "https://github.com/oxc-project/oxc.git", rev = "0e6498f7e218420153910074d5a55bbef7c1c1d4" }
+oxc_allocator = { git = "https://github.com/oxc-project/oxc.git", tag = "crates_v0.156.0" }

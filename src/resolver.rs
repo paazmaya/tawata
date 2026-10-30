@@ -1,5 +1,8 @@
+//! Input path resolution for single files, directories, and `*` glob patterns.
+
 use anyhow::{Context, Result};
 use glob::glob;
+use log::{debug, warn};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -13,10 +16,19 @@ pub fn is_supported_ebook_path(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
-/// Recursively or non-recursively finds all supported ebook files within a directory.
+/// Recursively or non-recursively finds all supported ebook files within a directory,
+/// returning them in deterministic sorted order.
+///
+/// # Errors
+///
+/// Returns an error if reading the directory or any traversed entry fails.
 pub fn collect_ebook_files_in_dir(dir: &Path, recursive: bool) -> Result<Vec<PathBuf>> {
     let mut paths = Vec::new();
     let depth = if recursive { usize::MAX } else { 1 };
+    debug!(
+        "Scanning directory {:?} (recursive: {}) for supported ebooks",
+        dir, recursive
+    );
 
     for entry in WalkDir::new(dir).max_depth(depth) {
         let entry = entry?;
@@ -24,26 +36,38 @@ pub fn collect_ebook_files_in_dir(dir: &Path, recursive: bool) -> Result<Vec<Pat
             paths.push(entry.into_path());
         }
     }
+    paths.sort();
     Ok(paths)
 }
 
-/// Resolves an input string (glob pattern, directory, or direct file path) to a list of matching Paths.
+/// Resolves an input string (glob pattern, directory, or direct file path) to a
+/// deterministically sorted list of matching paths.
+///
+/// # Errors
+///
+/// Returns an error if the glob pattern is invalid, directory traversal fails,
+/// or a literal input path does not exist.
 pub fn resolve_inputs(input: &str, recursive: bool) -> Result<Vec<PathBuf>> {
     let mut paths = Vec::new();
 
     if input.contains('*') {
-        // Handle Glob patterns
+        debug!("Resolving glob pattern: {}", input);
         for entry in glob(input).context("Failed to read glob pattern")? {
             match entry {
                 Ok(path) => paths.push(path),
-                Err(e) => eprintln!("Glob error: {:?}", e),
+                Err(e) => {
+                    warn!("Glob error while expanding {:?}: {}", input, e);
+                    eprintln!("Glob error: {:?}", e);
+                }
             }
         }
+        paths.sort();
     } else {
         let path = Path::new(input);
         if path.is_dir() {
             paths = collect_ebook_files_in_dir(path, recursive)?;
         } else if path.is_file() {
+            debug!("Resolved single input file: {:?}", path);
             paths.push(path.to_path_buf());
         } else {
             anyhow::bail!("Input path does not exist: {}", input);

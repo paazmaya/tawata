@@ -1,18 +1,25 @@
+//! Shared utilities for file I/O, output directory preparation, Markdown image
+//! link rewriting, Markdown-aware text cleanup, and OXC Markdown formatting.
+
 use anyhow::{Context, Result};
-use oxc::allocator::Allocator;
+use log::{debug, warn};
+use oxc_allocator::Allocator;
 use oxc_formatter_markdown::MarkdownFormatOptions;
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
+/// Matches three or more single alphabetic characters separated by single spaces (e.g. "w o r d").
+/// Requiring at least three letters avoids merging valid two-word sequences like "I a" or "a b".
 static SPACED_WORDS_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?P<word>\b\w(?: \w)+\b)").unwrap());
+    LazyLock::new(|| Regex::new(r"(?P<word>\b\p{Alphabetic}(?: \p{Alphabetic}){2,}\b)").unwrap());
 
 static MULTI_SPACE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r" {2,}").unwrap());
 
 static MARKDOWN_IMAGE_RE: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(!\[[^\]]*\])\([^)]*?([^/\\]+)\)").unwrap());
+    LazyLock::new(|| Regex::new(r"(!\[[^\]]*\])\(([^)]+)\)").unwrap());
 
 /// Checks whether a given file extension corresponds to a supported ebook format.
 pub fn is_supported_ebook_ext(ext: &str) -> bool {
@@ -33,16 +40,84 @@ pub fn is_image_filename(filename: &str) -> bool {
         || lower.ends_with(".svg")
 }
 
+/// Normalizes an internal archive asset path by converting backslashes to forward slashes
+/// and stripping leading `./` or `/` prefixes.
+pub fn normalize_asset_path(path: &str) -> String {
+    let replaced = path.replace('\\', "/");
+    let mut trimmed = replaced.as_str();
+    while let Some(rest) = trimmed.strip_prefix("./") {
+        trimmed = rest;
+    }
+    trimmed.trim_start_matches('/').to_string()
+}
+
+/// Returns `true` if a link destination is an external or data URL that should not be rewritten.
+fn is_external_or_data_url(dest: &str) -> bool {
+    let lower = dest.to_ascii_lowercase();
+    lower.starts_with("http://")
+        || lower.starts_with("https://")
+        || lower.starts_with("data:")
+        || lower.starts_with("//")
+}
+
+/// Splits a Markdown link destination into `(url, optional_title_suffix)`.
+fn split_markdown_destination(dest: &str) -> (&str, &str) {
+    let trimmed = dest.trim();
+    for (idx, ch) in trimmed.char_indices() {
+        if ch.is_ascii_whitespace() {
+            let rest = &trimmed[idx..];
+            let rest_trimmed = rest.trim_start();
+            if rest_trimmed.starts_with('"') || rest_trimmed.starts_with('\'') {
+                return (&trimmed[..idx], rest);
+            }
+        }
+    }
+    (trimmed, "")
+}
+
 /// Rewrites markdown image references (e.g. `![alt](path/to/img.png)`)
 /// to point to the local images directory prefix (e.g. `./images/img.png`).
+///
+/// External URLs (`http://`, `https://`, `data:`) are left untouched.
+#[cfg(test)]
 pub fn rewrite_markdown_image_links(markdown: &str, img_dir_prefix: &str) -> String {
+    rewrite_markdown_image_links_with_map(markdown, img_dir_prefix, &HashMap::new())
+}
+
+/// Rewrites markdown image references using an explicit `asset_map` from normalized
+/// archive path to extracted filename, falling back to the image basename when not found
+/// in the map. External URLs (`http://`, `https://`, `data:`) are left untouched.
+pub fn rewrite_markdown_image_links_with_map(
+    markdown: &str,
+    img_dir_prefix: &str,
+    asset_map: &HashMap<String, String>,
+) -> String {
     let prefix = img_dir_prefix.trim_end_matches('/');
     MARKDOWN_IMAGE_RE
         .replace_all(markdown, |caps: &regex::Captures| {
             let alt_part = caps.get(1).unwrap().as_str();
-            let filename = caps.get(2).unwrap().as_str();
+            let raw_dest = caps.get(2).unwrap().as_str();
+            let (url_part, title_suffix) = split_markdown_destination(raw_dest);
+
+            if is_external_or_data_url(url_part) {
+                return caps.get(0).unwrap().as_str().to_string();
+            }
+
+            let path_without_query = url_part.split(['?', '#']).next().unwrap_or(url_part);
+            let normalized = normalize_asset_path(path_without_query);
+
+            if let Some(mapped) = asset_map.get(&normalized) {
+                return format!("{}({}/{}{})", alt_part, prefix, mapped, title_suffix);
+            }
+
+            let filename = normalized.rsplit('/').next().unwrap_or(normalized.as_str());
+
+            if let Some(mapped) = asset_map.get(filename) {
+                return format!("{}({}/{}{})", alt_part, prefix, mapped, title_suffix);
+            }
+
             if is_image_filename(filename) {
-                format!("{}({}/{})", alt_part, prefix, filename)
+                format!("{}({}/{}{})", alt_part, prefix, filename, title_suffix)
             } else {
                 caps.get(0).unwrap().as_str().to_string()
             }
@@ -50,24 +125,133 @@ pub fn rewrite_markdown_image_links(markdown: &str, img_dir_prefix: &str) -> Str
         .into_owned()
 }
 
-/// Reconstructs words broken apart by spaces (e.g. "w o r d" -> "word").
+/// Applies `transform` only to segments outside inline backtick code spans.
+fn transform_outside_inline_code<F>(line: &str, mut transform: F) -> String
+where
+    F: FnMut(&str) -> String,
+{
+    if !line.contains('`') {
+        return transform(line);
+    }
+
+    let mut result = String::with_capacity(line.len());
+    let mut last_idx = 0;
+    let mut in_code = false;
+
+    for (idx, ch) in line.char_indices() {
+        if ch == '`' {
+            if !in_code {
+                result.push_str(&transform(&line[last_idx..idx]));
+                last_idx = idx;
+                in_code = true;
+            } else {
+                result.push_str(&line[last_idx..=idx]);
+                last_idx = idx + 1;
+                in_code = false;
+            }
+        }
+    }
+
+    if in_code {
+        result.push_str(&line[last_idx..]);
+    } else if last_idx < line.len() {
+        result.push_str(&transform(&line[last_idx..]));
+    }
+
+    result
+}
+
+/// Checks if a trimmed line opens or closes a Markdown fenced code block.
+fn is_fence_delimiter(trimmed: &str) -> bool {
+    trimmed.starts_with("```") || trimmed.starts_with("~~~")
+}
+
+/// Reconstructs words broken apart by spaces (e.g. "w o r d" -> "word")
+/// while skipping fenced code blocks and inline code spans.
 pub fn clean_spaced_words(text: &str) -> String {
-    SPACED_WORDS_RE
-        .replace_all(text, |caps: &regex::Captures| {
-            caps.name("word").unwrap().as_str().replace(' ', "")
-        })
-        .into_owned()
+    let mut in_fence = false;
+    let mut out = String::with_capacity(text.len());
+
+    for (idx, line) in text.split('\n').enumerate() {
+        if idx > 0 {
+            out.push('\n');
+        }
+        if is_fence_delimiter(line.trim_start()) {
+            in_fence = !in_fence;
+            out.push_str(line);
+            continue;
+        }
+        if in_fence {
+            out.push_str(line);
+            continue;
+        }
+
+        let cleaned = transform_outside_inline_code(line, |segment| {
+            SPACED_WORDS_RE
+                .replace_all(segment, |caps: &regex::Captures| {
+                    caps.name("word").unwrap().as_str().replace(' ', "")
+                })
+                .into_owned()
+        });
+        out.push_str(&cleaned);
+    }
+
+    out
 }
 
-/// Collapses sequences of two or more spaces into a single space.
+/// Collapses sequences of two or more spaces into a single space while preserving
+/// fenced code blocks, inline code spans, leading line indentation, and trailing
+/// two-space Markdown hard line breaks.
 pub fn collapse_whitespace(text: &str) -> String {
-    MULTI_SPACE_RE.replace_all(text, " ").into_owned()
+    let mut in_fence = false;
+    let lines: Vec<&str> = text.split('\n').collect();
+    let line_count = lines.len();
+    let mut out = String::with_capacity(text.len());
+
+    for (idx, line) in lines.into_iter().enumerate() {
+        if idx > 0 {
+            out.push('\n');
+        }
+        let trimmed_start = line.trim_start_matches(' ');
+        if is_fence_delimiter(trimmed_start.trim_start()) {
+            in_fence = !in_fence;
+            out.push_str(line);
+            continue;
+        }
+        if in_fence || trimmed_start.is_empty() {
+            out.push_str(line);
+            continue;
+        }
+
+        let leading_len = line.len() - trimmed_start.len();
+        let leading = &line[..leading_len];
+
+        // Preserve a two-space hard line break when a non-final line ends with >= 2 spaces.
+        let has_hard_break = idx + 1 < line_count && trimmed_start.ends_with("  ");
+        let body = if has_hard_break {
+            trimmed_start.trim_end_matches(' ')
+        } else {
+            trimmed_start
+        };
+
+        let collapsed_body = transform_outside_inline_code(body, |segment| {
+            MULTI_SPACE_RE.replace_all(segment, " ").into_owned()
+        });
+
+        out.push_str(leading);
+        out.push_str(&collapsed_body);
+        if has_hard_break {
+            out.push_str("  ");
+        }
+    }
+
+    out
 }
 
-/// Applies standard autocorrect formatting along with spaced-word and whitespace cleanups.
+/// Applies Markdown-aware autocorrect formatting along with spaced-word and whitespace cleanups.
 pub fn apply_autocorrect(text: &str) -> String {
-    let formatted = autocorrect::format(text);
-    let cleaned_words = clean_spaced_words(&formatted);
+    let formatted = autocorrect::format_for(text, "markdown");
+    let cleaned_words = clean_spaced_words(&formatted.out);
     collapse_whitespace(&cleaned_words)
 }
 
@@ -78,7 +262,12 @@ pub fn format_page_filename(prefix: &str, index: usize) -> String {
 
 /// Reads an input ebook fully into memory. The file is only ever opened read-only
 /// and is never held open or memory-mapped afterwards, so it cannot be modified.
+///
+/// # Errors
+///
+/// Returns an error if the file does not exist or cannot be read.
 pub fn read_input_file(path: &Path) -> Result<Vec<u8>> {
+    debug!("Reading input file into memory: {:?}", path);
     fs::read(path).with_context(|| format!("Failed to read input file: {:?}", path))
 }
 
@@ -93,18 +282,24 @@ pub fn determine_output_dir(input_path: &Path) -> PathBuf {
 }
 
 /// Creates the output directory and optionally an "images" directory within it.
+///
+/// # Errors
+///
+/// Returns an error if the target output directory collides with the input file
+/// or an existing regular file, or if directory creation fails.
 pub fn prepare_output_dirs(
     input_path: &Path,
     need_images: bool,
 ) -> Result<(PathBuf, Option<PathBuf>)> {
     let out_dir = determine_output_dir(input_path);
-    if out_dir == input_path {
+    if out_dir == input_path || out_dir.is_file() {
         anyhow::bail!(
-            "Refusing to use the input file itself as output directory: {:?}",
-            input_path
+            "Refusing to use an existing file as output directory: {:?}",
+            out_dir
         );
     }
     if !out_dir.exists() {
+        debug!("Creating output directory: {:?}", out_dir);
         fs::create_dir_all(&out_dir)
             .with_context(|| format!("Failed to create output directory: {:?}", out_dir))?;
     }
@@ -112,6 +307,7 @@ pub fn prepare_output_dirs(
     let img_dir = if need_images {
         let dir = out_dir.join("images");
         if !dir.exists() {
+            debug!("Creating images directory: {:?}", dir);
             fs::create_dir_all(&dir)
                 .with_context(|| format!("Failed to create images directory: {:?}", dir))?;
         }
@@ -133,6 +329,10 @@ pub fn prepare_markdown_content(content: &str, autocorrect: bool) -> String {
 }
 
 /// Formats markdown text in-process with the `oxc_formatter_markdown` crate.
+///
+/// # Errors
+///
+/// Returns an error if parsing or printing the Markdown document fails.
 pub fn format_with_oxfmt(content: &str) -> Result<String> {
     let allocator = Allocator::new();
     let formatted =
@@ -147,6 +347,10 @@ pub fn format_with_oxfmt(content: &str) -> Result<String> {
 
 /// Writes markdown content to `{out_dir}/{prefix}_{index:03}.md`, applying autocorrect
 /// and oxfmt formatting if requested.
+///
+/// # Errors
+///
+/// Returns an error if writing the output file fails.
 pub fn save_markdown_page(
     out_dir: &Path,
     prefix: &str,
@@ -166,6 +370,10 @@ pub fn save_markdown_page(
 
 /// Writes markdown content to `{out_dir}/{filename}`, applying autocorrect
 /// and oxfmt formatting if requested.
+///
+/// # Errors
+///
+/// Returns an error if writing the output file fails.
 pub fn save_markdown_file(
     out_dir: &Path,
     filename: &str,
@@ -177,10 +385,14 @@ pub fn save_markdown_file(
     if oxfmt {
         match format_with_oxfmt(&prepared) {
             Ok(formatted) => prepared = formatted,
-            Err(e) => eprintln!("Warning: formatting skipped for {}: {}", filename, e),
+            Err(e) => {
+                warn!("Formatting skipped for {}: {}", filename, e);
+                eprintln!("Warning: formatting skipped for {}: {}", filename, e);
+            }
         }
     }
     let md_file = out_dir.join(filename);
+    debug!("Writing markdown file: {:?}", md_file);
 
     fs::write(&md_file, prepared)
         .with_context(|| format!("Failed to write markdown file: {:?}", md_file))?;
@@ -241,6 +453,27 @@ mod tests {
     }
 
     #[test]
+    fn test_rewrite_markdown_image_links_external_and_titles_and_map() {
+        let input = "![Remote](https://example.com/path/pic.png)\n![Data](data:image/png;base64,AAAA)\n![WithQuery](OEBPS/img/cover.jpg?v=1#top \"Cover Title\")";
+        let rewritten = rewrite_markdown_image_links(input, "./images");
+        assert_eq!(
+            rewritten,
+            "![Remote](https://example.com/path/pic.png)\n![Data](data:image/png;base64,AAAA)\n![WithQuery](./images/cover.jpg \"Cover Title\")"
+        );
+
+        let mut map = HashMap::new();
+        map.insert("ch1/fig.png".to_string(), "fig.png".to_string());
+        map.insert("ch2/fig.png".to_string(), "fig_1.png".to_string());
+
+        let mapped_input = "![First](ch1/fig.png)\n![Second](./ch2/fig.png)";
+        let mapped_out = rewrite_markdown_image_links_with_map(mapped_input, "./images", &map);
+        assert_eq!(
+            mapped_out,
+            "![First](./images/fig.png)\n![Second](./images/fig_1.png)"
+        );
+    }
+
+    #[test]
     fn test_clean_spaced_words() {
         assert_eq!(clean_spaced_words("w o r d"), "word");
         assert_eq!(
@@ -250,6 +483,17 @@ mod tests {
         assert_eq!(
             clean_spaced_words("Normal text stays normal"),
             "Normal text stays normal"
+        );
+        // Short 2-letter sequences like "I a" or "a b" and digits should not be merged
+        assert_eq!(
+            clean_spaced_words("I a student in a b test 1 2 3"),
+            "I a student in a b test 1 2 3"
+        );
+        // Inline code and fenced code blocks should not be modified
+        let with_code = "Text `w o r d` and:\n```\nc o d e\n```\nafter h e r e.";
+        assert_eq!(
+            clean_spaced_words(with_code),
+            "Text `w o r d` and:\n```\nc o d e\n```\nafter here."
         );
     }
 
@@ -261,6 +505,12 @@ mod tests {
             "No extra spaces here"
         );
         assert_eq!(collapse_whitespace("Single space"), "Single space");
+        // Preserve leading indentation and trailing 2-space hard line breaks
+        let md = "  - Nested   item  \n    continued   line\n```\n  indented    code\n```";
+        assert_eq!(
+            collapse_whitespace(md),
+            "  - Nested item  \n    continued line\n```\n  indented    code\n```"
+        );
     }
 
     #[test]

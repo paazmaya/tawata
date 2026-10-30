@@ -30,6 +30,16 @@ flowchart TD
     end
 ```
 
+## Installation
+
+Build from source using Rust and Cargo (requires Rust 1.97+):
+
+```sh
+cargo build --release
+```
+
+The compiled binary will be located at `target/release/tawata`.
+
 ## Usage
 
 ```sh
@@ -43,18 +53,19 @@ and `djv` (converted with `djvu-rs`). Directory scans include supported files
 at the top level; use `--recursive` to include subdirectories. Glob patterns
 are expanded by `tawata`; unsupported matches are skipped.
 
-| Option | Description |
-| :--- | :--- |
-| `-r`, `--recursive` | Include nested directories when `<INPUT>` is a directory. Has no effect on a file or glob pattern. |
-| `-a`, `--autocorrect` | Fix spacing between CJK and Western text, rejoin words split by spaces, and collapse repeated spaces. This can also join short phrases such as `I am`. |
-| `--no-oxfmt` | Do not format generated Markdown with the OXC Markdown formatter. Formatting is enabled by default. |
-| `--single-file` | For EPUB, MOBI, AZW3, AZW, and KFX, write `book.md` instead of one file per chapter. DJVU always produces one file per page, so this option does not affect it. |
-| `-h`, `--help` | Show command-line help. |
-| `-V`, `--version` | Show the installed version. |
+| Option                | Description                                                                                                                                                                                                  |
+| :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-r`, `--recursive`   | Include nested directories when `<INPUT>` is a directory. Has no effect on a file or glob pattern.                                                                                                           |
+| `-a`, `--autocorrect` | Fix spacing between CJK and Western text, rejoin words split by spaces (3+ single letters), and collapse repeated spaces while preserving Markdown code blocks, indentation, and two-space hard line breaks. |
+| `--no-oxfmt`          | Do not format generated Markdown with the OXC Markdown formatter. Formatting is enabled by default.                                                                                                          |
+| `--single-file`       | For EPUB, MOBI, AZW3, AZW, and KFX, write `book.md` instead of one file per chapter. DJVU always produces one file per page, so this option does not affect it.                                              |
+| `-h`, `--help`        | Show command-line help.                                                                                                                                                                                      |
+| `-V`, `--version`     | Show the installed version.                                                                                                                                                                                  |
 
 For an input such as `books/novel.epub`, output is written next to the input in
 `books/novel/`. By default, the Markdown files are named `chapter_001.md`,
-`chapter_002.md`, and so on, and extracted images are saved in `images/`.
+`chapter_002.md`, and so on, and any extracted images are saved in `images/`
+(created only when the ebook contains images, with collision-safe filenames).
 `--single-file` writes `book.md` in that same output directory. If chapter
 boundaries cannot be reliably identified, the converter falls back to
 `book.md`. A DJVU input instead produces `page_001.md`, `page_002.md`, and so
@@ -62,7 +73,8 @@ on; a page without a text layer gets a placeholder message.
 
 The input is opened read-only and is never modified. The complete input is read
 into memory before conversion; output is written to a separate directory, and
-the input file itself cannot be used as the output directory.
+the input file itself cannot be used as the output directory. If any supported
+ebook file fails to convert, `tawata` stops and exits with a non-zero status code.
 
 ### Examples
 
@@ -111,11 +123,12 @@ For debug logging, set `RUST_LOG=debug` before running the command (for example,
 ## The "Autocorrect" Feature Explained
 
 Autocorrect is intended to improve spacing and punctuation between CJK
-(Chinese/Japanese/Korean) characters and English words. Ebook conversion can
-also insert spaces between individual letters when the source uses separate
-styled spans. With `--autocorrect`, Tawata rejoins those spaced-out words and
-collapses repeated spaces. Because the word-rejoining rule also applies to
-short sequences, it may merge valid phrases such as `I am` into `Iam`.
+(Chinese/Japanese/Korean) characters and English words using Markdown-aware
+formatting. Ebook conversion can also insert spaces between individual letters
+when the source uses separate styled spans. With `--autocorrect`, Tawata
+rejoins sequences of three or more single-letter tokens (such as `w o r d`) and
+collapses repeated inline spaces while preserving fenced code blocks, inline
+code spans, leading line indentation, and trailing two-space hard line breaks.
 
 ## Background for the project name
 
@@ -134,14 +147,13 @@ to the given stance.
 
 The test files in the `fixtures` folder were gathered from the following locations:
 
-- azw: []()
-- azw3: []()
+- azw: [](<>)
+- azw3: [](<>)
 - djvu: [Richard Chace Tolman, Public domain, via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:TolmanNon1.djvu)
-- epub: []()
-- kfx: []()
-- mobi: []()
-- pdf: [Council Regulation (EU) No 216-2013](https://commons.wikimedia.org/wiki/File:Council_Regulation_(EU)_No_216-2013_of_7_March_2013_on_the_electronic_publication_of_the_Official_Journal_of_the_European_Union_(EUR_2013-216).pdf)
-
+- epub: [](<>)
+- kfx: [](<>)
+- mobi: [](<>)
+- pdf: [Council Regulation (EU) No 216-2013](<https://commons.wikimedia.org/wiki/File:Council_Regulation_(EU)_No_216-2013_of_7_March_2013_on_the_electronic_publication_of_the_Official_Journal_of_the_European_Union_(EUR_2013-216).pdf>)
 
 ## Version history
 

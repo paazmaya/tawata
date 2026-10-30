@@ -1,5 +1,8 @@
+//! DJVU and DJV converter that extracts page text layers to per-page Markdown files.
+
 use anyhow::{Context, Result};
 use djvu_rs::Document;
+use log::{debug, info};
 use std::path::Path;
 
 use crate::common::{prepare_output_dirs, read_input_file, save_markdown_page};
@@ -18,6 +21,11 @@ pub fn format_page_markdown(page_num: usize, text: &str) -> String {
 }
 
 /// Converts a DJVU file to one markdown file per page using its text layer.
+///
+/// # Errors
+///
+/// Returns an error if the DJVU file cannot be read or parsed, a page or its text
+/// layer fails to decode, or writing an output Markdown file fails.
 pub fn process_djvu(djvu_path: &Path, autocorrect: bool, oxfmt: bool) -> Result<()> {
     // 1. Open DJVU
     let data = read_input_file(djvu_path)?;
@@ -27,6 +35,7 @@ pub fn process_djvu(djvu_path: &Path, autocorrect: bool, oxfmt: bool) -> Result<
     let (out_dir, _) = prepare_output_dirs(djvu_path, false)?;
 
     let page_count = doc.page_count();
+    info!("Extracting {} pages from DJVU {:?}", page_count, djvu_path);
     println!("Extracting {} pages from DJVU...", page_count);
 
     for i in 0..page_count {
@@ -34,8 +43,14 @@ pub fn process_djvu(djvu_path: &Path, autocorrect: bool, oxfmt: bool) -> Result<
             .page(i)
             .context(format!("Failed to read page {}", i + 1))?;
         let text = if let Some(layer) = page.text_layer()? {
+            debug!(
+                "Extracted text layer for page {} ({} bytes)",
+                i + 1,
+                layer.text.len()
+            );
             layer.text
         } else {
+            debug!("No text layer on page {}", i + 1);
             String::new()
         };
 
@@ -61,11 +76,18 @@ mod tests {
         data.extend_from_slice(&[0, 10, 0, 10, 24, 0, 100, 0, 22, 0]);
 
         let dir = std::env::temp_dir().join(format!("tawata_djvu_min_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("min.djvu");
         std::fs::write(&path, data).unwrap();
         assert!(process_djvu(&path, false, false).is_ok());
-        assert!(dir.join("min").exists() || std::fs::read_dir(&dir).unwrap().count() > 1);
+
+        let page_file = dir.join("min").join("page_001.md");
+        assert!(page_file.exists());
+        assert_eq!(
+            std::fs::read_to_string(&page_file).unwrap(),
+            "# Page 1\n\n*(No text layer found on this page)*\n"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 

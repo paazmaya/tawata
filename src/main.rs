@@ -1,5 +1,8 @@
-use anyhow::Result;
+//! Command-line entry point and format dispatcher for `tawata`.
+
+use anyhow::{Context, Result};
 use clap::Parser;
+use log::{debug, info, warn};
 use std::path::Path;
 
 mod boko_converter;
@@ -40,6 +43,12 @@ struct Cli {
 }
 
 /// Dispatches an ebook file to its appropriate format-specific converter.
+///
+/// Unsupported file extensions or files without extensions are skipped with a warning.
+///
+/// # Errors
+///
+/// Returns an error if converting a supported ebook file fails.
 pub fn convert_ebook_file(
     path: &Path,
     autocorrect: bool,
@@ -51,12 +60,18 @@ pub fn convert_ebook_file(
         .and_then(|e| e.to_str())
         .map(|s| s.to_ascii_lowercase());
 
+    debug!("Dispatching file {:?} (ext: {:?})", path, ext);
+
     match ext.as_deref() {
         Some("epub") | Some("mobi") | Some("azw3") | Some("azw") | Some("kfx") => {
             boko_converter::process_boko(path, autocorrect, oxfmt, single_file)
         }
         Some("djvu") | Some("djv") => djvu_converter::process_djvu(path, autocorrect, oxfmt),
         Some(unsupported) => {
+            warn!(
+                "Skipping {:?}: extension '{}' is not supported",
+                path, unsupported
+            );
             eprintln!(
                 "Skipping {:?}: Extension '{}' is not currently supported.",
                 path, unsupported
@@ -64,32 +79,34 @@ pub fn convert_ebook_file(
             Ok(())
         }
         None => {
+            warn!("Skipping {:?}: no file extension found", path);
             eprintln!("Skipping {:?}: No file extension found.", path);
             Ok(())
         }
     }
 }
 
-/// Parses arguments, resolves the inputs and converts each file, reporting per-file errors.
+/// Parses arguments, resolves the inputs, and converts each file, failing fast on conversion errors.
 fn main() -> Result<()> {
     env_logger::init();
     let cli = Cli::parse();
+    debug!("Parsed CLI arguments: {:?}", cli);
 
     let paths = resolver::resolve_inputs(&cli.input, cli.recursive)?;
 
     if paths.is_empty() {
+        info!("No ebook files found for input: {}", cli.input);
         println!("No Ebook files found for input: {}", cli.input);
         return Ok(());
     }
 
+    info!("Found {} ebook files to process", paths.len());
     println!("Found {} Ebook files to process.", paths.len());
 
     for path in paths {
         println!("\nProcessing: {:?}", path);
-
-        if let Err(e) = convert_ebook_file(&path, cli.autocorrect, !cli.no_oxfmt, cli.single_file) {
-            eprintln!("Error processing {:?}: {}", path, e);
-        }
+        convert_ebook_file(&path, cli.autocorrect, !cli.no_oxfmt, cli.single_file)
+            .with_context(|| format!("Error processing {:?}", path))?;
     }
 
     Ok(())
