@@ -145,14 +145,43 @@ to the given stance.
 
 ## Testing
 
+The test suite consists of unit tests across the source modules in `src/` and
+end-to-end CLI integration tests in `tests/integration_fixtures.rs`:
+
+- **Unit tests** (`src/*.rs`): Verify CLI flag parsing, input path and glob
+  resolution, Markdown-aware autocorrect and whitespace cleanup, image asset
+  extraction and filename disambiguation, Markdown link rewriting, OXC Markdown
+  formatting, and in-memory EPUB and DJVU conversion.
+- **Integration tests** (`tests/integration_fixtures.rs`): Run the compiled
+  `tawata` binary against real fixture files in `fixtures/` (EPUB, AZW3, MOBI,
+  KF8 MOBI, DJVU, and unsupported PDF) as well as corrupted input to verify
+  output files, Markdown content, warning messages, and non-zero exit codes.
+
+Run the test suite, linter, and coverage checks with Cargo:
+
+```sh
+# Run all unit and integration tests
+cargo test
+
+# Run only the fixture integration tests
+cargo test --test integration_fixtures
+
+# Check formatting and lint with Clippy
+cargo fmt --all -- --check
+cargo clippy --all-targets --all-features -- -D warnings
+
+# Measure code coverage (requires cargo-tarpaulin)
+cargo tarpaulin
+```
+
 The test files in the `fixtures` folder were gathered from the following locations:
 
 - azw: [](<>)
-- azw3: [](<>)
+- azw3: [The Vampire - John William Polidori](https://standardebooks.org/ebooks/john-william-polidori/the-vampire)
 - djvu: [Richard Chace Tolman, Public domain, via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:TolmanNon1.djvu)
-- epub: [](<>)
+- epub: [Iracema by José Martiniano de Alencar](https://www.gutenberg.org/ebooks/67740)
 - kfx: [](<>)
-- mobi: [](<>)
+- mobi: [The strange case of Dr. Jekyll and Mr. Hyde by Robert Louis Stevenson](https://www.gutenberg.org/ebooks/43)
 - pdf: [Council Regulation (EU) No 216-2013](<https://commons.wikimedia.org/wiki/File:Council_Regulation_(EU)_No_216-2013_of_7_March_2013_on_the_electronic_publication_of_the_Official_Journal_of_the_European_Union_(EUR_2013-216).pdf>)
 
 ## Version history
