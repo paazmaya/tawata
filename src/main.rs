@@ -34,7 +34,7 @@ struct Cli {
 
     /// Skip OXC Markdown formatting (formatting is enabled by default)
     #[arg(long)]
-    no_oxfmt: bool,
+    no_format: bool,
 
     /// Write supported ebook formats to book.md instead of one file per chapter;
     /// DJVU always produces one Markdown file per page
@@ -105,7 +105,7 @@ fn main() -> Result<()> {
 
     for path in paths {
         println!("\nProcessing: {:?}", path);
-        convert_ebook_file(&path, cli.autocorrect, !cli.no_oxfmt, cli.single_file)
+        convert_ebook_file(&path, cli.autocorrect, !cli.no_format, cli.single_file)
             .with_context(|| format!("Error processing {:?}", path))?;
     }
 
@@ -123,18 +123,18 @@ mod tests {
             "-r",
             "-a",
             "--single-file",
-            "--no-oxfmt",
+            "--no-format",
             "./library",
         ]);
         assert_eq!(cli.input, "./library");
-        assert!(cli.recursive && cli.autocorrect && cli.single_file && cli.no_oxfmt);
+        assert!(cli.recursive && cli.autocorrect && cli.single_file && cli.no_format);
 
         let defaults = Cli::parse_from(["tawata", "book.epub"]);
         assert!(
             !defaults.recursive
                 && !defaults.autocorrect
                 && !defaults.single_file
-                && !defaults.no_oxfmt
+                && !defaults.no_format
         );
     }
 

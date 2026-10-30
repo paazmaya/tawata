@@ -57,7 +57,7 @@ are expanded by `tawata`; unsupported matches are skipped.
 | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `-r`, `--recursive`   | Include nested directories when `<INPUT>` is a directory. Has no effect on a file or glob pattern.                                                                                                           |
 | `-a`, `--autocorrect` | Fix spacing between CJK and Western text, rejoin words split by spaces (3+ single letters), and collapse repeated spaces while preserving Markdown code blocks, indentation, and two-space hard line breaks. |
-| `--no-oxfmt`          | Do not format generated Markdown with the OXC Markdown formatter. Formatting is enabled by default.                                                                                                          |
+| `--no-format`         | Do not format generated Markdown with the OXC Markdown formatter. Formatting is enabled by default.                                                                                                          |
 | `--single-file`       | For EPUB, MOBI, AZW3, AZW, and KFX, write `book.md` instead of one file per chapter. DJVU always produces one file per page, so this option does not affect it.                                              |
 | `-h`, `--help`        | Show command-line help.                                                                                                                                                                                      |
 | `-V`, `--version`     | Show the installed version.                                                                                                                                                                                  |
@@ -86,7 +86,7 @@ examples use `book.epub` as the input; its output directory is `book/`.
 tawata book.epub
 
 # Same chapter files and images, but skip Markdown formatting
-tawata --no-oxfmt book.epub
+tawata --no-format book.epub
 
 # One Markdown file, book/book.md, plus book/images/
 tawata --single-file book.epub
