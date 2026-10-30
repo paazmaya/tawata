@@ -130,6 +130,19 @@ to the given stance.
 
 [Read more about why these martial arts are important for me at `karatejukka.fi`.](https://karatejukka.fi)
 
+## Testing
+
+The test files in the `fixtures` folder were gathered from the following locations:
+
+- azw: []()
+- azw3: []()
+- djvu: [Richard Chace Tolman, Public domain, via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:TolmanNon1.djvu)
+- epub: []()
+- kfx: []()
+- mobi: []()
+- pdf: [Council Regulation (EU) No 216-2013](https://commons.wikimedia.org/wiki/File:Council_Regulation_(EU)_No_216-2013_of_7_March_2013_on_the_electronic_publication_of_the_Official_Journal_of_the_European_Union_(EUR_2013-216).pdf)
+
+
 ## Version history
 
 [Changes across versions and upcoming changes are tracked in `CHANGELOG.md`.](CHANGELOG.md)
