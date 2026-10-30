@@ -2,7 +2,7 @@
 //! link rewriting, Markdown-aware text cleanup, and OXC Markdown formatting.
 
 use anyhow::{Context, Result};
-use log::{debug, warn};
+use log::debug;
 use oxc_allocator::Allocator;
 use oxc_formatter_markdown::MarkdownFormatOptions;
 use regex::Regex;
@@ -383,12 +383,8 @@ pub fn save_markdown_file(
 ) -> Result<PathBuf> {
     let mut prepared = prepare_markdown_content(content, autocorrect);
     if oxfmt {
-        match format_with_oxfmt(&prepared) {
-            Ok(formatted) => prepared = formatted,
-            Err(e) => {
-                warn!("Formatting skipped for {}: {}", filename, e);
-                eprintln!("Warning: formatting skipped for {}: {}", filename, e);
-            }
+        if let Ok(formatted) = format_with_oxfmt(&prepared) {
+            prepared = formatted;
         }
     }
     let md_file = out_dir.join(filename);
@@ -464,12 +460,14 @@ mod tests {
         let mut map = HashMap::new();
         map.insert("ch1/fig.png".to_string(), "fig.png".to_string());
         map.insert("ch2/fig.png".to_string(), "fig_1.png".to_string());
+        map.insert("only_base.png".to_string(), "mapped_base.png".to_string());
 
-        let mapped_input = "![First](ch1/fig.png)\n![Second](./ch2/fig.png)";
+        let mapped_input =
+            "![First](ch1/fig.png)\n![Second](./ch2/fig.png)\n![Third](deep/sub/only_base.png)";
         let mapped_out = rewrite_markdown_image_links_with_map(mapped_input, "./images", &map);
         assert_eq!(
             mapped_out,
-            "![First](./images/fig.png)\n![Second](./images/fig_1.png)"
+            "![First](./images/fig.png)\n![Second](./images/fig_1.png)\n![Third](./images/mapped_base.png)"
         );
     }
 
@@ -489,11 +487,12 @@ mod tests {
             clean_spaced_words("I a student in a b test 1 2 3"),
             "I a student in a b test 1 2 3"
         );
-        // Inline code and fenced code blocks should not be modified
-        let with_code = "Text `w o r d` and:\n```\nc o d e\n```\nafter h e r e.";
+        // Inline code, unclosed backticks, and fenced code blocks should not be modified
+        let with_code =
+            "Text `w o r d` and:\n```\nc o d e\n```\nafter h e r e and `u n c l o s e d";
         assert_eq!(
             clean_spaced_words(with_code),
-            "Text `w o r d` and:\n```\nc o d e\n```\nafter here."
+            "Text `w o r d` and:\n```\nc o d e\n```\nafter here and `u n c l o s e d"
         );
     }
 

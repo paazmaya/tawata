@@ -240,6 +240,7 @@ mod tests {
 <item id="c1" href="c1.xhtml" media-type="application/xhtml+xml"/>
 <item id="c2" href="c2.xhtml" media-type="application/xhtml+xml"/>
 <item id="img" href="pic.png" media-type="image/png"/>
+<item id="missing" href="missing.png" media-type="image/png"/>
 </manifest>
 <spine><itemref idref="c1"/><itemref idref="c2"/></spine>
 </package>"#;
@@ -338,6 +339,41 @@ mod tests {
     }
 
     #[test]
+    fn test_process_boko_epub_fallback_when_chapter_split_ambiguous() {
+        let container = br#"<?xml version="1.0"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles>
+</container>"#;
+        let opf = br#"<?xml version="1.0"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+<dc:identifier id="id">test-id</dc:identifier><dc:title>Fallback</dc:title><dc:language>en</dc:language>
+</metadata>
+<manifest>
+<item id="c1" href="c1.xhtml" media-type="application/xhtml+xml"/>
+</manifest>
+<spine><itemref idref="c1"/></spine>
+</package>"#;
+        let c1 = br#"<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Ch1</title></head><body><p>Part 1</p><hr/><p>Part 2</p></body></html>"#;
+        let epub = make_zip(&[
+            ("mimetype", b"application/epub+zip"),
+            ("META-INF/container.xml", container),
+            ("OEBPS/content.opf", opf),
+            ("OEBPS/c1.xhtml", c1),
+        ]);
+
+        let dir = temp_dir("epub_fallback");
+        let path = dir.join("fallback.epub");
+        fs::write(&path, epub).unwrap();
+
+        assert!(process_boko(&path, false, false, false).is_ok());
+        let out_dir = dir.join("fallback");
+        assert!(out_dir.join("book.md").exists());
+        assert!(!out_dir.join("chapter_001.md").exists());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn test_disambiguate_image_filename_collisions() {
         let mut used = HashSet::new();
         assert_eq!(disambiguate_image_filename("pic.png", &mut used), "pic.png");
@@ -349,6 +385,8 @@ mod tests {
             disambiguate_image_filename("pic.png", &mut used),
             "pic_2.png"
         );
+        assert_eq!(disambiguate_image_filename("raw", &mut used), "raw");
+        assert_eq!(disambiguate_image_filename("raw", &mut used), "raw_1");
     }
 
     #[test]

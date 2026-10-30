@@ -92,6 +92,40 @@ mod tests {
     }
 
     #[test]
+    fn test_process_djvu_page_with_text_layer() {
+        // TXTa chunk payload: 24-bit length (5) + "Hello" + version byte (0)
+        let txta_payload: &[u8] = &[0, 0, 5, b'H', b'e', b'l', b'l', b'o', 0];
+        let mut form_body = Vec::new();
+        form_body.extend_from_slice(b"DJVUINFO");
+        form_body.extend_from_slice(&10u32.to_be_bytes());
+        form_body.extend_from_slice(&[0, 10, 0, 10, 24, 0, 100, 0, 22, 0]);
+        form_body.extend_from_slice(b"TXTa");
+        form_body.extend_from_slice(&(txta_payload.len() as u32).to_be_bytes());
+        form_body.extend_from_slice(txta_payload);
+        if !txta_payload.len().is_multiple_of(2) {
+            form_body.push(0);
+        }
+
+        let mut data = b"AT&TFORM".to_vec();
+        data.extend_from_slice(&(form_body.len() as u32).to_be_bytes());
+        data.extend_from_slice(&form_body);
+
+        let dir = std::env::temp_dir().join(format!("tawata_djvu_txt_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("txt.djvu");
+        std::fs::write(&path, data).unwrap();
+        assert!(process_djvu(&path, false, false).is_ok());
+
+        let page_file = dir.join("txt").join("page_001.md");
+        assert_eq!(
+            std::fs::read_to_string(&page_file).unwrap(),
+            "# Page 1\n\nHello\n"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn test_process_djvu_invalid_content() {
         let dir = std::env::temp_dir().join(format!("tawata_djvu_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();

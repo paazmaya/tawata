@@ -2,7 +2,7 @@
 
 use anyhow::{Context, Result};
 use glob::glob;
-use log::{debug, warn};
+use log::debug;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -52,14 +52,11 @@ pub fn resolve_inputs(input: &str, recursive: bool) -> Result<Vec<PathBuf>> {
 
     if input.contains('*') {
         debug!("Resolving glob pattern: {}", input);
-        for entry in glob(input).context("Failed to read glob pattern")? {
-            match entry {
-                Ok(path) => paths.push(path),
-                Err(e) => {
-                    warn!("Glob error while expanding {:?}: {}", input, e);
-                    eprintln!("Glob error: {:?}", e);
-                }
-            }
+        for path in glob(input)
+            .context("Failed to read glob pattern")?
+            .flatten()
+        {
+            paths.push(path);
         }
         paths.sort();
     } else {

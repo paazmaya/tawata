@@ -86,12 +86,8 @@ pub fn convert_ebook_file(
     }
 }
 
-/// Parses arguments, resolves the inputs, and converts each file, failing fast on conversion errors.
-fn main() -> Result<()> {
-    env_logger::init();
-    let cli = Cli::parse();
-    debug!("Parsed CLI arguments: {:?}", cli);
-
+/// Resolves inputs from `cli` and converts each discovered ebook file, failing fast on errors.
+fn run(cli: &Cli) -> Result<()> {
     let paths = resolver::resolve_inputs(&cli.input, cli.recursive)?;
 
     if paths.is_empty() {
@@ -110,6 +106,14 @@ fn main() -> Result<()> {
     }
 
     Ok(())
+}
+
+/// Parses arguments, resolves the inputs, and converts each file, failing fast on conversion errors.
+fn main() -> Result<()> {
+    env_logger::init();
+    let cli = Cli::parse();
+    debug!("Parsed CLI arguments: {:?}", cli);
+    run(&cli)
 }
 
 #[cfg(test)]
@@ -167,5 +171,28 @@ mod tests {
 
         let no_ext_path = Path::new("no_extension_file");
         assert!(convert_ebook_file(no_ext_path, false, false, false).is_ok());
+    }
+
+    #[test]
+    fn test_run_with_empty_glob_and_valid_djvu() {
+        let dir = std::env::temp_dir().join(format!("tawata_run_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let empty_cli = Cli::parse_from(["tawata", dir.to_str().unwrap()]);
+        assert!(run(&empty_cli).is_ok());
+
+        let mut data = b"AT&TFORM".to_vec();
+        data.extend_from_slice(&22u32.to_be_bytes());
+        data.extend_from_slice(b"DJVUINFO");
+        data.extend_from_slice(&10u32.to_be_bytes());
+        data.extend_from_slice(&[0, 10, 0, 10, 24, 0, 100, 0, 22, 0]);
+        let djvu_path = dir.join("doc.djvu");
+        std::fs::write(&djvu_path, data).unwrap();
+
+        let run_cli = Cli::parse_from(["tawata", "--no-format", djvu_path.to_str().unwrap()]);
+        assert!(run(&run_cli).is_ok());
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
