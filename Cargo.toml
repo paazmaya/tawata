@@ -3,9 +3,13 @@ name = "tawata"
 description = "Convert various ebook formats to markdown at command line"
 version = "0.1.0"
 edition = "2021"
+authors = ["Juga Paazmaya <paazmaya@yahoo.com>"]
 homepage = "https://github.com/paazmaya/tawata"
 repository = "https://github.com/paazmaya/tawata"
 license = "MIT"
+keywords = ["ebook", "epub", "mobi", "djvu", "markdown"]
+categories = ["command-line-utilities", "text-processing"]
+include = ["src/**/*", "Cargo.toml", "LICENSE", "README.md", "CHANGELOG.md"]
 
 [dependencies]
 clap = { version = "4.6.7", features = ["derive"] }

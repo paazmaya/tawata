@@ -3,7 +3,7 @@
 > Convert various ebook formats to Markdown at the command line
 
 [![CircleCI](https://circleci.com/gh/paazmaya/tawata.svg?style=svg)](https://circleci.com/gh/paazmaya/tawata)
-[![codecov](https://codecov.io/gh/paazmaya/tawata/branch/master/graph/badge.svg)](https://codecov.io/gh/paazmaya/tawata)
+[![codecov](https://codecov.io/gh/paazmaya/tawata/branch/main/graph/badge.svg)](https://codecov.io/gh/paazmaya/tawata)
 
 ```mermaid
 flowchart TD

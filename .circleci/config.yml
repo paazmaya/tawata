@@ -3,12 +3,14 @@ version: 2.1
 
 orbs:
   # https://circleci.com/developer/orbs/orb/codecov/codecov
+  # TODO: Pin codecov CLI version on upload step
   codecov: codecov/codecov@6.1.0
 
 jobs:
   build:
     docker:
       # https://circleci.com/developer/images/image/cimg/rust
+      # TODO: Pin Docker image to immutable @sha256 digest
       - image: cimg/rust:1.99
 
     working_directory: ~/repo
@@ -19,7 +21,6 @@ jobs:
       - restore_cache:
           keys:
             - v1-rust-{{ checksum "Cargo.lock" }}
-            - v1-rust-
 
       - run:
           name: Install Rust tools
