@@ -53,6 +53,8 @@ and `djv` (converted with `djvu-rs`). Directory scans include supported files
 at the top level; use `--recursive` to include subdirectories. Glob patterns
 are expanded by `tawata`; unsupported matches are skipped.
 
+For PDF conversion, use [markitdown-rs](https://github.com/majiayu000/markitdown-rs).
+
 | Option                | Description                                                                                                                                                                                                  |
 | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `-r`, `--recursive`   | Include nested directories when `<INPUT>` is a directory. Has no effect on a file or glob pattern.                                                                                                           |
@@ -154,7 +156,7 @@ end-to-end CLI integration tests in `tests/integration_fixtures.rs`:
   formatting, and in-memory EPUB and DJVU conversion.
 - **Integration tests** (`tests/integration_fixtures.rs`): Run the compiled
   `tawata` binary against real fixture files in `fixtures/` (EPUB, AZW3, MOBI,
-  KF8 MOBI, DJVU, and unsupported PDF) as well as corrupted input to verify
+  KF8 MOBI, and DJVU) as well as corrupted input to verify
   output files, Markdown content, warning messages, and non-zero exit codes.
 
 Run the test suite, linter, and coverage checks with Cargo:
@@ -182,7 +184,10 @@ The test files in the `fixtures` folder were gathered from the following locatio
 - epub: [Iracema by José Martiniano de Alencar](https://www.gutenberg.org/ebooks/67740)
 - kfx: [](<>)
 - mobi: [The strange case of Dr. Jekyll and Mr. Hyde by Robert Louis Stevenson](https://www.gutenberg.org/ebooks/43)
-- pdf: [Council Regulation (EU) No 216-2013](<https://commons.wikimedia.org/wiki/File:Council_Regulation_(EU)_No_216-2013_of_7_March_2013_on_the_electronic_publication_of_the_Official_Journal_of_the_European_Union_(EUR_2013-216).pdf>)
+
+## See also
+
+- [markitdown-rs](https://github.com/majiayu000/markitdown-rs): Rust library and CLI for converting various files (such as PDF) to Markdown.
 
 ## Version history
 

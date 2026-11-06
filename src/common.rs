@@ -409,7 +409,7 @@ mod tests {
         assert!(is_supported_ebook_ext("MOBI"));
         assert!(is_supported_ebook_ext("djvu"));
         assert!(is_supported_ebook_ext("DJV"));
-        assert!(!is_supported_ebook_ext("pdf"));
+        assert!(!is_supported_ebook_ext("docx"));
         assert!(!is_supported_ebook_ext("txt"));
         assert!(!is_supported_ebook_ext(""));
     }
@@ -422,18 +422,18 @@ mod tests {
         assert!(is_image_filename("art.webp"));
         assert!(is_image_filename("anim.gif"));
         assert!(is_image_filename("vector.svg"));
-        assert!(!is_image_filename("document.pdf"));
+        assert!(!is_image_filename("document.docx"));
         assert!(!is_image_filename("chapter.html"));
         assert!(!is_image_filename("notes.txt"));
     }
 
     #[test]
     fn test_rewrite_markdown_image_links() {
-        let input = "Here is an image: ![Cover](OEBPS/images/cover.jpg)\nAnd another: ![Diagram](assets/diag.png)\nAnd non-image: [Doc](files/doc.pdf)";
+        let input = "Here is an image: ![Cover](OEBPS/images/cover.jpg)\nAnd another: ![Diagram](assets/diag.png)\nAnd non-image: [Doc](files/doc.txt)";
         let rewritten = rewrite_markdown_image_links(input, "./images");
         assert_eq!(
             rewritten,
-            "Here is an image: ![Cover](./images/cover.jpg)\nAnd another: ![Diagram](./images/diag.png)\nAnd non-image: [Doc](files/doc.pdf)"
+            "Here is an image: ![Cover](./images/cover.jpg)\nAnd another: ![Diagram](./images/diag.png)\nAnd non-image: [Doc](files/doc.txt)"
         );
 
         // Windows style backslashes

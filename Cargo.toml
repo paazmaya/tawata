@@ -3,6 +3,7 @@ name = "tawata"
 description = "Convert various ebook formats to markdown at command line"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.92"
 authors = ["Juga Paazmaya <paazmaya@yahoo.com>"]
 homepage = "https://github.com/paazmaya/tawata"
 repository = "https://github.com/paazmaya/tawata"
@@ -25,6 +26,7 @@ djvu-rs = "0.44.0"
 boko = "0.6.0"
 
 # OXC Native Markdown Formatting
+#oxc = { version = "0.157.0", features = ["full"] }
 oxc_allocator = "0.157.0"
 oxc_formatter_markdown = { git = "https://github.com/oxc-project/oxc.git", tag = "crates_v0.157.0" }
 

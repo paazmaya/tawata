@@ -177,24 +177,6 @@ fn integration_mobi_kf8_fixture() {
 }
 
 #[test]
-fn integration_pdf_fixture_unsupported() {
-    let (tmp, input) = copy_fixture("Council_Regulation_EU_No_216-2013.pdf");
-    let output = Command::new(bin())
-        .arg(&input)
-        .output()
-        .expect("failed to run tawata");
-    assert!(output.status.success());
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(
-        stderr.contains("Extension 'pdf' is not currently supported"),
-        "stderr: {}",
-        stderr
-    );
-    assert!(!tmp.join("Council_Regulation_EU_No_216-2013").exists());
-    let _ = fs::remove_dir_all(&tmp);
-}
-
-#[test]
 fn integration_corrupted_ebook_exits_nonzero() {
     let tmp = std::env::temp_dir().join(format!("tawata_int_corrupt_{}", std::process::id()));
     let _ = fs::remove_dir_all(&tmp);

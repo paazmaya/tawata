@@ -86,7 +86,7 @@ mod tests {
         assert!(is_supported_ebook_path(Path::new("book.MOBI")));
         assert!(is_supported_ebook_path(Path::new("book.djvu")));
         assert!(is_supported_ebook_path(Path::new("book.DJV")));
-        assert!(!is_supported_ebook_path(Path::new("book.pdf")));
+        assert!(!is_supported_ebook_path(Path::new("book.docx")));
         assert!(!is_supported_ebook_path(Path::new("book")));
     }
 

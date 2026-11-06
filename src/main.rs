@@ -166,7 +166,7 @@ mod tests {
 
     #[test]
     fn test_convert_ebook_file_unsupported() {
-        let unsupported_path = Path::new("test.pdf");
+        let unsupported_path = Path::new("test.docx");
         assert!(convert_ebook_file(unsupported_path, false, false, false).is_ok());
 
         let no_ext_path = Path::new("no_extension_file");
